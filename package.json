@@ -1,6 +1,6 @@
 {
   "name": "flyte",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "An object model for the HTML5 canvas - a lightweight alternative to fabric.js written with ES6.",
   "scripts": {
     "test": "mocha test/**/*.test.js",
