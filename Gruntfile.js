@@ -52,7 +52,8 @@ module.exports = function(grunt) {
           src: 'dist/' + pkg.name + "-" + pkg.version + ".js"
         }
       }
-    }
+    },
+    clean: ["dist/"]
   });
 
   grunt.loadNpmTasks("grunt-browserify");
@@ -60,6 +61,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks("grunt-banner");
   grunt.loadNpmTasks("grunt-contrib-watch");
+  grunt.loadNpmTasks("grunt-contrib-clean");
 
-  grunt.registerTask("default", ["browserify", "usebanner", "concat", "uglify"]);
+  grunt.registerTask("default", ["clean", "browserify", "usebanner", "concat", "uglify"]);
 };
