@@ -18,7 +18,7 @@ return function WeakMap(){return get(this,arguments[0])}},{get:function get(key)
 
 /**
  * flyte - Object model for the HTML5 canvas - a lightweight, faster alternative to fabric.js
- * @version v0.2.3
+ * @version v0.2.4
  * @license MIT
  * @date 2015-08-18
  * @preserve
