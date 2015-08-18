@@ -15,7 +15,7 @@
 <head>
 </head>
 <body>
-    <canvas id="myCanvas"></canvas>
+    <canvas></canvas>
 
     <script src="dist/flyte-0.0.1.js"></script>
     <script>
