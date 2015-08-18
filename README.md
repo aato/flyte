@@ -3,7 +3,7 @@
 <a href="https://github.com/aato/flyte" target="_blank"><img src="https://github.com/aato/flyte/raw/master/lib/screenshot.png" style="width:300px;box-shadow:rgba(0,0,0,0.3) 0 0 5px"></a>
 
 [![NPM version](https://badge.fury.io/js/fabric.svg)](http://badge.fury.io/js/flyte)
-[![devDependency Status](https://david-dm.org/aato/flyte.js/dev-status.svg?theme=shields.io)](https://david-dm.org/aato/flyte.js#info=devDependencies)
+[![devDependency Status](https://david-dm.org/aato/flyte/dev-status.svg?theme=shields.io)](https://david-dm.org/aato/flyte#info=devDependencies)
 
 **Flyte.js** is a framework that makes it easy to work with the HTML5 canvas element. It is an **interactive object model** on top of the canvas element. A lighter-weight, boiled down version of <a href="https://github.com/kangax/fabric.js">Fabric.js</a>
 
