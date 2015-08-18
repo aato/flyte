@@ -1,0 +1,39 @@
+{
+  "name": "flyte",
+  "version": "0.1.0",
+  "description": "An object model for the HTML5 canvas - a lightweight alternative to fabric.js written with ES6.",
+  "scripts": {
+    "test": "mocha test/**/*.test.js",
+    "build": "grunt build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aato/flyte"
+  },
+  "keywords": [
+    "HTML5",
+    "canvas",
+    "graphic",
+    "graphics",
+    "object",
+    "model"
+  ],
+  "devDependencies": {
+    "babel": "^5.8.21",
+    "babelify": "6.0.1",
+    "grunt": "0.4.5",
+    "grunt-banner": "^0.5.0",
+    "grunt-browserify": "3.6.0",
+    "grunt-contrib-concat": "^0.5.1",
+    "grunt-contrib-uglify": "^0.9.1",
+    "grunt-contrib-watch": "0.6.1",
+    "mocha": "^2.2.5",
+    "should": "^7.0.4"
+  },
+  "author": "Alex Alksne",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/aato/flyte/issues"
+  },
+  "homepage": "https://github.com/aato/flyte"
+}
