@@ -17,7 +17,7 @@
 <body>
     <canvas></canvas>
 
-    <script src="dist/flyte-0.0.1.js"></script>
+    <script src="dist/flyte-X.Y.Z.js"></script>
     <script>
         var scene = new FScene({canvasID: 'canvas', width: 500, height: 400});
 
