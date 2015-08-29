@@ -24,56 +24,54 @@ export default class FObject{
   }
 
   setPosition({x = this._position.x, y = this._position.y} = {}){
-    if(x !== this._position.x || y !== this._position.y){
-      this._dirty = true;
-      this._calculateCenter();
-    }
+    if(x === this._position.x && y === this._position.y) return;
 
     this._position.x = x;
     this._position.y = y;
+
+    this._dirty = true;
+    this._calculateCenter();
   }
 
   setDimensions({width = this._width, height = this._height} = {}){
-    if(width !== this._width || height !== this._height){
-      this._dirty = true;
-      this._calculateCenter();
-    }
+    if(width === this._width && height === this._height) return;
 
     this._width = width;
     this._height = height;
+
+    this._c.width = width;
+    this._c.height = height;
+
+    this._dirty = true;
+    this._calculateCenter();
   }
 
   setBackground(background = this._background){
-    if(background !== this._background){
-      this._dirty = true;
-    }
+    if(background === this._background) return;
 
+    this._dirty = true;
     this._background = background;
   }
 
   _calculateCenter(){
-    var centerX = this._position.x + this._width / 2;
-    var centerY = this._position.y + this._height / 2;
-
-    return {x: centerX, y: centerY};
+    this._center = {
+      x: this._position.x + this._width / 2,
+      y: this._position.y + this._height / 2
+    };
   }
 
   setScene(scene){
-    if(!this._scene){
-      this._scene = scene;
-      return true;
-    }
+    if(this._scene) return false;
 
-    return false;
+    this._scene = scene;
+    return true;
   }
 
   setID(id){
-    if(!this._id){
-      this._id = id;
-      return true;
-    }
+    if(this._id) return false;
 
-    return false;
+    this._id = id;
+    return true;
   }
 
   draw(ctx){
@@ -103,10 +101,12 @@ export default class FObject{
   hitTest({x, y, width, height} = {}){
     if(!x || !y) return false;
 
+    // If we're testing for a single point.
     if(!width || !height){
       if(x >= this._position.x && x <= this._position.x + this._width && y <= this._position.y + this._height && y >= this._position.y){
         return true;
       }
+    // If we're testing for a rectangle.
     } else {
       if(x <= this._position.x && x + width >= this._position.x){
         if(y <= this._position.y && y + height >= this._position.y){
