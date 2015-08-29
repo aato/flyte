@@ -1,11 +1,7 @@
-import {FCanvas} from './FCanvas';
-import {FRequestFrame} from './FRequestFrame';
-import {FScene} from './FScene';
-import {FRect} from './FRect';
-import {FImage} from './FImage';
+import FObject from './FObject';
+import FScene from './FScene';
 
-window.FCanvas = FCanvas;
-window.FRequestFrame = FRequestFrame;
-window.FScene = FScene;
-window.FRect = FRect;
-window.FImage = FImage;
+window.FL = {};
+
+window.FL.FObject = FObject;
+window.FL.FScene = FScene;

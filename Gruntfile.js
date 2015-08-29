@@ -53,7 +53,7 @@ module.exports = function(grunt) {
         }
       }
     },
-    clean: ["dist/"]
+    clean: ["dist/**/*.js"]
   });
 
   grunt.loadNpmTasks("grunt-browserify");

@@ -18,844 +18,238 @@ return function WeakMap(){return get(this,arguments[0])}},{get:function get(key)
 
 /**
  * flyte - Object model for the HTML5 canvas - a lightweight, faster alternative to fabric.js
- * @version v0.2.4
+ * @version v0.2.5
  * @license MIT
- * @date 2015-08-18
+ * @date 2015-08-28
  * @preserve
  * Copyright (c) Alex Alksne <alex.alksne@gmail.com> 2015 All Rights Reserved.
  */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-// shim for using process in browser
-
-var process = module.exports = {};
-var queue = [];
-var draining = false;
-
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    draining = true;
-    var currentQueue;
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        var i = -1;
-        while (++i < len) {
-            currentQueue[i]();
-        }
-        len = queue.length;
-    }
-    draining = false;
-}
-process.nextTick = function (fun) {
-    queue.push(fun);
-    if (!draining) {
-        setTimeout(drainQueue, 0);
-    }
-};
-
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-process.versions = {};
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-// TODO(shtylman)
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-process.umask = function() { return 0; };
-
-},{}],2:[function(require,module,exports){
-(function (process){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
   value: true
 });
 
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-var FCanvas = function FCanvas(canvasID) {
-  _classCallCheck(this, FCanvas);
-
-  // Dummy object for testing.
-  if (typeof process === 'object' && process + '' === '[object process]') {
-    return {
-      width: undefined,
-      height: undefined,
-      style: { width: '', height: '' },
-      getContext: function getContext(type) {
-        return {
-          save: function save() {},
-          restore: function restore() {},
-          clearRect: function clearRect() {},
-          fillStyle: '',
-          drawImage: function drawImage() {},
-          fillRect: function fillRect() {}
-        };
-      },
-      onmousedown: function onmousedown(e) {},
-      onmouseup: function onmouseup(e) {},
-      onclick: function onclick(e) {},
-      ondblclick: function ondblclick(e) {},
-      onmousemove: function onmousemove(e) {},
-      onmouseout: function onmouseout(e) {}
-    };
-  }
-
-  if (canvasID) {
-    return document.querySelector(canvasID);
-  }
-
-  return document.createElement('canvas');
-};
-
-exports.FCanvas = FCanvas;
-
-}).call(this,require('_process'))
-},{"_process":1}],3:[function(require,module,exports){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-var _get = function get(_x2, _x3, _x4) { var _again = true; _function: while (_again) { var object = _x2, property = _x3, receiver = _x4; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x2 = parent; _x3 = property; _x4 = receiver; _again = true; continue _function; } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var _FRect2 = require("./FRect");
-
-var FImage = (function (_FRect) {
-  _inherits(FImage, _FRect);
-
-  function FImage() {
+var FObject = (function () {
+  function FObject() {
     var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-    var _ref$top = _ref.top;
-    var top = _ref$top === undefined ? 0 : _ref$top;
-    var _ref$left = _ref.left;
-    var left = _ref$left === undefined ? 0 : _ref$left;
+    var _ref$x = _ref.x;
+    var x = _ref$x === undefined ? 0 : _ref$x;
+    var _ref$y = _ref.y;
+    var y = _ref$y === undefined ? 0 : _ref$y;
     var _ref$width = _ref.width;
-    var width = _ref$width === undefined ? 30 : _ref$width;
+    var width = _ref$width === undefined ? 100 : _ref$width;
     var _ref$height = _ref.height;
-    var height = _ref$height === undefined ? 30 : _ref$height;
-    var _ref$zIndex = _ref.zIndex;
-    var zIndex = _ref$zIndex === undefined ? 0 : _ref$zIndex;
-    var _ref$fillStyle = _ref.fillStyle;
-    var fillStyle = _ref$fillStyle === undefined ? "#000000" : _ref$fillStyle;
-    var mouseDownCB = _ref.mouseDownCB;
-    var mouseUpCB = _ref.mouseUpCB;
-    var mouseMoveCB = _ref.mouseMoveCB;
-    var clickCB = _ref.clickCB;
-    var doubleClickCB = _ref.doubleClickCB;
-    var _ref$image = _ref.image;
-    var image = _ref$image === undefined ? new Image() : _ref$image;
+    var height = _ref$height === undefined ? 100 : _ref$height;
+    var _ref$layer = _ref.layer;
+    var layer = _ref$layer === undefined ? 0 : _ref$layer;
+    var _ref$scaleX = _ref.scaleX;
+    var scaleX = _ref$scaleX === undefined ? 1 : _ref$scaleX;
+    var _ref$scaleY = _ref.scaleY;
+    var scaleY = _ref$scaleY === undefined ? 1 : _ref$scaleY;
+    var _ref$angle = _ref.angle;
+    var angle = _ref$angle === undefined ? 0 : _ref$angle;
+    var _ref$background = _ref.background;
+    var background = _ref$background === undefined ? '#DDDDDD' : _ref$background;
+    var canvas = _ref.canvas;
 
-    _classCallCheck(this, FImage);
-
-    _get(Object.getPrototypeOf(FImage.prototype), "constructor", this).call(this, { top: top, left: left, width: width, height: height, zIndex: zIndex, fillStyle: fillStyle, mouseDownCB: mouseDownCB, mouseUpCB: mouseUpCB, mouseMoveCB: mouseMoveCB, clickCB: clickCB, doubleClickCB: doubleClickCB });
-
-    this.image = image;
-
-    this._preserveAspectRatio = true;
-  }
-
-  _createClass(FImage, [{
-    key: "_render",
-    value: function _render() {
-      this._ctx.save();
-
-      this._ctx.clearRect(0, 0, this._c.width, this._c.height);
-      this._ctx.fillStyle = this._fillStyle;
-      this._ctx.fillRect(0, 0, this._width, this._height);
-
-      this._ctx.drawImage(this._img, 0, 0, this._width, this._height);
-
-      this._ctx.restore();
-    }
-  }, {
-    key: "toJSON",
-    value: function toJSON() {
-      var jsonObj = _get(Object.getPrototypeOf(FImage.prototype), "toJSON", this).call(this);
-
-      jsonObj.image = this._c.toDataURL();
-
-      return jsonObj;
-    }
-  }, {
-    key: "image",
-    set: function set(img) {
-      this._img = img;
-      this.width = this._img.width;
-      this.height = this._img.height;
-      this._aspectRatio = this._height / this._width;
-
-      this._dirty = true;
-    }
-  }]);
-
-  return FImage;
-})(_FRect2.FRect);
-
-exports.FImage = FImage;
-
-},{"./FRect":4}],4:[function(require,module,exports){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var _FCanvas = require("./FCanvas");
-
-var FRect = (function () {
-  function FRect() {
-    var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-    var _ref$top = _ref.top;
-    var top = _ref$top === undefined ? 0 : _ref$top;
-    var _ref$left = _ref.left;
-    var left = _ref$left === undefined ? 0 : _ref$left;
-    var _ref$width = _ref.width;
-    var width = _ref$width === undefined ? 30 : _ref$width;
-    var _ref$height = _ref.height;
-    var height = _ref$height === undefined ? 30 : _ref$height;
-    var _ref$zIndex = _ref.zIndex;
-    var zIndex = _ref$zIndex === undefined ? 0 : _ref$zIndex;
-    var _ref$fillStyle = _ref.fillStyle;
-    var fillStyle = _ref$fillStyle === undefined ? "#000000" : _ref$fillStyle;
-    var mouseDownCB = _ref.mouseDownCB;
-    var mouseUpCB = _ref.mouseUpCB;
-    var mouseMoveCB = _ref.mouseMoveCB;
-    var clickCB = _ref.clickCB;
-    var doubleClickCB = _ref.doubleClickCB;
-
-    _classCallCheck(this, FRect);
-
-    this._top = top;
-    this._left = left;
-    this._width = width;
-    this._height = height;
-    this._zIndex = zIndex;
-    this._fillStyle = fillStyle;
+    _classCallCheck(this, FObject);
 
     this._id = undefined;
     this._scene = undefined;
 
-    this._selected = false;
-    this._dragged = false;
-    this._hasMouseOver = false;
-    this._hasMouseOverScaleCtrl = false;
-    this._hasMouseOverDeleteCtrl = false;
-    this._selectedScaleCtrl = -1;
+    this._position = { x: x, y: y, layer: layer };
+    this._rotation = angle;
+    this._scale = { x: scaleX, y: scaleY };
+
+    this._width = width;
+    this._height = height;
+
+    this._background = background;
+    this._center = { x: -1, y: -1 };
+
     this._dirty = true;
-    this._controlsDirty = true;
 
-    this._aspectRatio = this._height / this._width;
-    this._preserveAspectRatio = false;
-
-    this._MIN_SIZE = 50;
-    this._SCALE_CTRL_RADIUS = 8;
-    this._SCALE_CTRL_RR = this._SCALE_CTRL_RADIUS * this._SCALE_CTRL_RADIUS;
-    this._DELETE_CTRL_SIZE = this._SCALE_CTRL_RADIUS * 2;
-    this._PI2 = Math.PI * 2;
-
-    this.mouseDownCB = mouseDownCB || this.mouseDownCB;
-    this.mouseUpCB = mouseUpCB || this.mouseUpCB;
-    this.mouseMoveCB = mouseMoveCB || this.mouseMoveCB;
-    this.clickCB = clickCB || this.clickCB;
-    this.doubleClickCB = doubleClickCB || this.doubleClickCB;
-
-    var canvas = new _FCanvas.FCanvas();
-
-    this._c = new _FCanvas.FCanvas();
+    this._c = canvas || document.createElement('canvas');
     this._c.width = this._width;
     this._c.height = this._height;
     this._ctx = this._c.getContext('2d');
+
+    this._calculateCenter();
   }
 
-  _createClass(FRect, [{
-    key: "mouseDownCB",
-    value: function mouseDownCB() {}
-  }, {
-    key: "mouseUpCB",
-    value: function mouseUpCB() {}
-  }, {
-    key: "mouseMoveCB",
-    value: function mouseMoveCB() {}
-  }, {
-    key: "clickCB",
-    value: function clickCB() {}
-  }, {
-    key: "doubleClickCB",
-    value: function doubleClickCB() {}
-  }, {
-    key: "_drawBorder",
-    value: function _drawBorder(ctx) {
-      ctx.save();
+  _createClass(FObject, [{
+    key: 'setPosition',
+    value: function setPosition() {
+      var _ref2 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-      ctx.strokeStyle = "grey";
-      ctx.lineWidth = 3;
-      ctx.setLineDash([5, 5]);
+      var _ref2$x = _ref2.x;
+      var x = _ref2$x === undefined ? this._position.x : _ref2$x;
+      var _ref2$y = _ref2.y;
+      var y = _ref2$y === undefined ? this._position.y : _ref2$y;
 
-      ctx.beginPath();
-      ctx.moveTo(this._left, this._top);
-      ctx.lineTo(this._left + this._width, this._top);
-      ctx.lineTo(this._left + this._width, this._top + this._height);
-      ctx.lineTo(this._left, this._top + this._height);
-      ctx.closePath();
-      ctx.stroke();
-
-      ctx.restore();
-    }
-  }, {
-    key: "_drawDeleteControl",
-    value: function _drawDeleteControl(ctx) {
-      var deleteCtrlTop = this._top - this._DELETE_CTRL_SIZE / 2;
-      var deleteCtrlLeft = this._left + this._width - this._SCALE_CTRL_RADIUS - (this._MIN_SIZE - this._SCALE_CTRL_RADIUS * 2) / 2 - this._DELETE_CTRL_SIZE / 2;
-
-      ctx.save();
-
-      if (this._hasMouseOverDeleteCtrl) {
-        ctx.strokeStyle = "black";
-        ctx.lineWidth = 3;
-      } else {
-        ctx.strokeStyle = "black";
-        ctx.lineWidth = 3;
+      if (x !== this._position.x || y !== this._position.y) {
+        this._dirty = true;
       }
 
-      ctx.beginPath();
-      ctx.moveTo(deleteCtrlLeft, deleteCtrlTop);
-      ctx.lineTo(deleteCtrlLeft + this._DELETE_CTRL_SIZE, deleteCtrlTop);
-      ctx.lineTo(deleteCtrlLeft + this._DELETE_CTRL_SIZE, deleteCtrlTop + this._DELETE_CTRL_SIZE);
-      ctx.lineTo(deleteCtrlLeft, deleteCtrlTop + this._DELETE_CTRL_SIZE);
-      ctx.closePath();
-      ctx.stroke();
-
-      ctx.restore();
+      this._position.x = x;
+      this._position.y = y;
     }
   }, {
-    key: "_drawScaleCtrls",
-    value: function _drawScaleCtrls(ctx) {
-      this._drawScaleCtrl(ctx, 0);
-      this._drawScaleCtrl(ctx, 1);
-      this._drawScaleCtrl(ctx, 2);
-      this._drawScaleCtrl(ctx, 3);
-    }
-  }, {
-    key: "_drawScaleCtrl",
-    value: function _drawScaleCtrl(ctx, scaleCtrlNumber) {
-      var x = undefined;
-      var y = undefined;
+    key: 'setDimensions',
+    value: function setDimensions() {
+      var _ref3 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-      switch (scaleCtrlNumber) {
-        case 0:
-          x = this._left;
-          y = this._top;
-          break;
-        case 1:
-          x = this._left + this._width;
-          y = this._top;
-          break;
-        case 2:
-          x = this._left + this._width;
-          y = this._top + this._height;
-          break;
-        case 3:
-          x = this._left;
-          y = this._top + this._height;
-          break;
+      var _ref3$width = _ref3.width;
+      var width = _ref3$width === undefined ? this._width : _ref3$width;
+      var _ref3$height = _ref3.height;
+      var height = _ref3$height === undefined ? this._height : _ref3$height;
+
+      if (width !== this._width || height !== this._height) {
+        this._dirty = true;
+        this._calculateCenter();
       }
 
-      ctx.save();
+      this._width = width;
+      this._height = height;
+    }
+  }, {
+    key: 'setBackground',
+    value: function setBackground() {
+      var background = arguments.length <= 0 || arguments[0] === undefined ? this._background : arguments[0];
 
-      if (this._hasMouseOverScaleCtrl) {
-        ctx.strokeStyle = "#ffffff";
-      } else {
-        ctx.strokeStyle = "#ffffff";
+      if (background !== this._background) {
+        this._dirty = true;
       }
 
-      ctx.beginPath();
-      ctx.arc(x, y, this._SCALE_CTRL_RADIUS, 0, this._PI2, false);
-      ctx.closePath();
-      ctx.stroke();
-
-      ctx.restore();
+      this._background = background;
     }
   }, {
-    key: "_render",
-    value: function _render() {
-      this._ctx.save();
+    key: '_calculateCenter',
+    value: function _calculateCenter() {
+      var centerX = this._position.x + this._width / 2;
+      var centerY = this._position.y + this._height / 2;
 
-      this._ctx.clearRect(0, 0, this._c.width, this._c.height);
-      this._ctx.fillStyle = this._fillStyle;
-      this._ctx.fillRect(0, 0, this._width, this._height);
-
-      this._ctx.restore();
+      return { x: centerX, y: centerY };
     }
   }, {
-    key: "_postRender",
-    value: function _postRender(ctx, drawBordersAndControls) {
-      if (drawBordersAndControls && this._controlsDirty) {
-        this._scene.postRenderCt = this._scene.postRenderCt || 0;
-        this._scene.postRenderCt++;
-        if (this._hasMouseOver || this._selected) {
-          this._drawBorder(ctx);
-        }
-
-        if (this._selected) {
-          this._drawScaleCtrls(ctx);
-
-          this._drawDeleteControl(ctx);
-        }
-
-        this._controlsDirty = false;
-      }
-    }
-  }, {
-    key: "hitTest",
-    value: function hitTest(top, left) {
-      if (top >= this._top && top <= this._top + this._height && left >= this._left && left <= this._left + this._width) {
+    key: 'setScene',
+    value: function setScene(scene) {
+      if (!this._scene) {
+        this._scene = scene;
         return true;
       }
 
       return false;
     }
   }, {
-    key: "deleteCtrlHitTest",
-    value: function deleteCtrlHitTest(x, y) {
-      var deleteCtrlTop = this._top - this._DELETE_CTRL_SIZE / 2;
-      var deleteCtrlLeft = this._left + this._width - this._SCALE_CTRL_RADIUS - (this._MIN_SIZE - this._SCALE_CTRL_RADIUS * 2) / 2 - this._DELETE_CTRL_SIZE / 2;
-
-      if (x >= deleteCtrlLeft && x <= deleteCtrlLeft + this._DELETE_CTRL_SIZE && y >= deleteCtrlTop && y <= deleteCtrlTop + this._DELETE_CTRL_SIZE) {
+    key: 'setID',
+    value: function setID(id) {
+      if (!this._id) {
+        this._id = id;
         return true;
       }
 
       return false;
     }
   }, {
-    key: "scaleCtrlHitTest",
-    value: function scaleCtrlHitTest(x, y) {
-      var dx, dy;
-
-      // top-left
-      dx = x - this._left;
-      dy = y - this._top;
-      if (dx * dx + dy * dy <= this._SCALE_CTRL_RR) {
-        return 0;
-      }
-      // top-right
-      dx = x - (this._left + this._width);
-      dy = y - this._top;
-      if (dx * dx + dy * dy <= this._SCALE_CTRL_RR) {
-        return 1;
-      }
-      // bottom-right
-      dx = x - (this._left + this._width);
-      dy = y - (this._top + this._height);
-      if (dx * dx + dy * dy <= this._SCALE_CTRL_RR) {
-        return 2;
-      }
-      // bottom-left
-      dx = x - this._left;
-      dy = y - (this._top + this._height);
-      if (dx * dx + dy * dy <= this._SCALE_CTRL_RR) {
-        return 3;
-      }
-
-      return -1;
-    }
-  }, {
-    key: "above",
-    value: function above(obj) {
-      return this.zIndex > obj.zIndex;
-    }
-  }, {
-    key: "below",
-    value: function below(obj) {
-      return this.zIndex < obj.zIndex;
-    }
-  }, {
-    key: "onSameLayerAs",
-    value: function onSameLayerAs(obj) {
-      return this.zIndex === obj.zIndex;
-    }
-  }, {
-    key: "isSelected",
-    value: function isSelected() {
-      return this._selected;
-    }
-  }, {
-    key: "isSameObjectAs",
-    value: function isSameObjectAs(obj) {
-      if (!obj) return undefined;
-
-      return this.id === obj.id;
-    }
-  }, {
-    key: "translate",
-    value: function translate(dx, dy) {
-      this.left += dx;
-      this.top += dy;
-
-      this._controlsDirty = true;
-    }
-  }, {
-    key: "scale",
-    value: function scale(dx, dy, relativeToScaleCtrl) {
-      switch (relativeToScaleCtrl) {
-        case 0:
-          if (this._width - dx >= this._MIN_SIZE && this._scene._prevX <= this._left + this._SCALE_CTRL_RADIUS) {
-            this.left += dx;
-            this.width -= dx;
-
-            if (this._preserveAspectRatio) {
-              this.top += this._aspectRatio * dx;
-              this.height -= this._aspectRatio * dx;
-            }
-          }
-
-          if (this._height - dy >= this._MIN_SIZE && this._scene._prevY <= this._top + this._SCALE_CTRL_RADIUS && !this._preserveAspectRatio) {
-            this.top += dy;
-            this.height -= dy;
-          }
-          break;
-        case 1:
-          if (this._width + dx >= this._MIN_SIZE && this._scene._prevX >= this._left + this._width - this._SCALE_CTRL_RADIUS) {
-            this.width += dx;
-
-            if (this._preserveAspectRatio) {
-              this.top -= this._aspectRatio * dx;
-              this.height += this._aspectRatio * dx;
-            }
-          }
-
-          if (this._height - dy >= this._MIN_SIZE && this._scene._prevY <= this._top + this._SCALE_CTRL_RADIUS && !this._preserveAspectRatio) {
-            this.top += dy;
-            this.height -= dy;
-          }
-
-          break;
-        case 2:
-          if (this._width + dx >= this._MIN_SIZE && this._scene._prevX >= this._left + this._width - this._SCALE_CTRL_RADIUS) {
-            this.width += dx;
-
-            if (this._preserveAspectRatio) {
-              this.height += this._aspectRatio * dx;
-            }
-          }
-
-          if (this._height + dy >= this._MIN_SIZE && this._scene._prevY >= this._top + this._height - this._SCALE_CTRL_RADIUS && !this._preserveAspectRatio) {
-            this.height += dy;
-          }
-
-          break;
-        case 3:
-          if (this._width - dx >= this._MIN_SIZE && this._scene._prevX <= this._left + this._SCALE_CTRL_RADIUS) {
-            this.left += dx;
-            this.width -= dx;
-
-            if (this._preserveAspectRatio) {
-              this.height -= this._aspectRatio * dx;
-            }
-          }
-
-          if (this._height + dy >= this._MIN_SIZE && this._scene._prevY >= this._top + this._height - this._SCALE_CTRL_RADIUS && !this._preserveAspectRatio) {
-            this.height += dy;
-          }
-
-          break;
-      }
-
-      this._controlsDirty = true;
-    }
-  }, {
-    key: "toJSON",
-    value: function toJSON() {
-      var jsonObj = {
-        id: this._id,
-        left: this._left,
-        top: this._top,
-        width: this._width,
-        height: this._height,
-        zIndex: this._zIndex,
-        fillStyle: this._fillStyle
-      };
-
-      return jsonObj;
-    }
-  }, {
-    key: "draw",
-    value: function draw(ctx, drawSelf, drawBordersAndControls) {
+    key: 'draw',
+    value: function draw(ctx) {
       if (this._dirty) {
         this._render();
         this._dirty = false;
       }
 
-      if (drawSelf) {
-        ctx.drawImage(this._c, this._left, this._top);
-      }
+      ctx.save();
+      ctx.translate(this._center.x, this._center.y);
+      ctx.scale(this._scale.x, this._scale.y);
 
-      this._postRender(ctx, drawBordersAndControls);
+      ctx.drawImage(this._c, this._position.x, this._position.y);
+      ctx.restore();
     }
   }, {
-    key: "id",
-    get: function get() {
-      return this._id;
+    key: '_render',
+    value: function _render() {
+      this._ctx.save();
+      this._ctx.clearRect(0, 0, this._width, this._height);
+      this._ctx.fillStyle = this._background;
+      this._ctx.fillRect(0, 0, this._width, this._height);
+
+      // Update this object's canvas here.
+      this._ctx.restore();
     }
   }, {
-    key: "dirty",
-    get: function get() {
-      return this._dirty;
-    }
-  }, {
-    key: "top",
-    get: function get() {
-      return this._top;
-    },
-    set: function set(top) {
-      if (top !== this._top) {
-        this._top = top;
-        this._dirty = true;
-      }
-    }
-  }, {
-    key: "left",
-    get: function get() {
-      return this._left;
-    },
-    set: function set(left) {
-      if (left !== this._left) {
-        this._left = left;
-        this._dirty = true;
-      }
-    }
-  }, {
-    key: "width",
-    get: function get() {
-      return this._width;
-    },
-    set: function set(width) {
-      if (width !== this._width) {
-        this._width = width;
-        this._c.width = width;
-        this._dirty = true;
-      }
-    }
-  }, {
-    key: "height",
-    get: function get() {
-      return this._height;
-    },
-    set: function set(height) {
-      if (height !== this._height) {
-        this._height = height;
-        this._c.height = height;
-        this._dirty = true;
-      }
-    }
-  }, {
-    key: "zIndex",
-    get: function get() {
-      return this._zIndex;
-    },
-    set: function set(zIndex) {
-      if (zIndex !== this._zIndex) {
-        this._zIndex = zIndex;
-        this._scene._dirtyZIndexes = true;
-      }
-    }
-  }, {
-    key: "fillStyle",
-    get: function get() {
-      return this._fillStyle;
-    },
-    set: function set(fillStyle) {
-      if (fillStyle !== this._fillStyle) {
-        this._fillStyle = fillStyle;
-        this._dirty = true;
-      }
-    }
-  }, {
-    key: "scaleCtrlRadius",
-    get: function get() {
-      return this._SCALE_CTRL_RADIUS;
-    }
-  }, {
-    key: "hasMouseOver",
-    get: function get() {
-      return this._hasMouseOver;
-    },
-    set: function set(hasMouseOver) {
-      if (hasMouseOver !== this._hasMouseOver) {
-        this._hasMouseOver = hasMouseOver;
-        this._controlsDirty = true;
-      }
-    }
-  }, {
-    key: "hasMouseOverScaleCtrl",
-    get: function get() {
-      return this._hasMouseOverScaleCtrl;
-    },
-    set: function set(hasMouseOverScaleCtrl) {
-      if (hasMouseOverScaleCtrl !== this._hasMouseOverScaleCtrl) {
-        this._hasMouseOverScaleCtrl = hasMouseOverScaleCtrl;
-      }
-    }
-  }, {
-    key: "hasMouseOverDeleteCtrl",
-    get: function get() {
-      return this._hasMouseOverDeleteCtrl;
-    },
-    set: function set(hasMouseOverDeleteCtrl) {
-      if (hasMouseOverDeleteCtrl !== this._hasMouseOverDeleteCtrl) {
-        this._hasMouseOverDeleteCtrl = hasMouseOverDeleteCtrl;
-      }
-    }
-  }, {
-    key: "selected",
-    get: function get() {
-      return this._selected;
-    },
-    set: function set(selected) {
-      if (selected !== this._selected) {
-        this._selected = selected;
-        this._controlsDirty = true;
-      }
-    }
-  }, {
-    key: "dragged",
-    get: function get() {
-      return this._dragged;
-    },
-    set: function set(dragged) {
-      this._dragged = dragged;
-    }
-  }, {
-    key: "selectedScaleCtrl",
-    get: function get() {
-      return this._selectedScaleCtrl;
-    },
-    set: function set(selectedScaleCtrl) {
-      this._selectedScaleCtrl = selectedScaleCtrl;
-    }
-  }, {
-    key: "controlsDirty",
-    get: function get() {
-      return this._controlsDirty;
+    key: 'hitTest',
+    value: function hitTest() {
+      var _ref4 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+      var x = _ref4.x;
+      var y = _ref4.y;
+      var width = _ref4.width;
+      var height = _ref4.height;
     }
   }]);
 
-  return FRect;
+  return FObject;
 })();
 
-exports.FRect = FRect;
+exports['default'] = FObject;
+module.exports = exports['default'];
 
-},{"./FCanvas":2}],5:[function(require,module,exports){
-(function (process){
+},{}],2:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
   value: true
 });
 
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+var _get = function get(_x2, _x3, _x4) { var _again = true; _function: while (_again) { var object = _x2, property = _x3, receiver = _x4; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x2 = parent; _x3 = property; _x4 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-var FRequestFrame = function FRequestFrame(requestType) {
-  _classCallCheck(this, FRequestFrame);
+function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-  // Dummy object for testing.
-  if (typeof process === 'object' && process + '' === '[object process]') {
-    return function () {};
-  }
+var _FObject2 = require('./FObject');
 
-  return requestFrame(requestType).bind(window);
-};
+var _FObject3 = _interopRequireDefault(_FObject2);
 
-exports.FRequestFrame = FRequestFrame;
+var FScene = (function (_FObject) {
+  _inherits(FScene, _FObject);
 
-}).call(this,require('_process'))
-},{"_process":1}],6:[function(require,module,exports){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var _FCanvas = require("./FCanvas");
-
-var _FRequestFrame = require("./FRequestFrame");
-
-var FScene = (function () {
   function FScene() {
     var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-    var canvasID = _ref.canvasID;
-    var width = _ref.width;
-    var height = _ref.height;
+    var canvas = _ref.canvas;
+    var _ref$width = _ref.width;
+    var width = _ref$width === undefined ? 600 : _ref$width;
+    var _ref$height = _ref.height;
+    var height = _ref$height === undefined ? 300 : _ref$height;
 
     _classCallCheck(this, FScene);
 
-    if (!canvasID) {
-      var e = new Error('Flyte: Must supply an id for the target canvas.');
-      e.code = "E_NO_CANVAS_ID";
+    if (!canvas) {
+      var e = new Error('Flyte.FScene#constructor: Scene must be supplied a canvas.');
+      e.code = "E_CANVAS_UNDEFINED";
       throw e;
     }
 
-    if (!/^[0-9]+$/.test(width) || !/^[0-9]+$/.test(height)) {
-      var e = new Error('Flyte: Canvas dimensions must be positive integers.');
-      e.code = "E_INVALID_CANVAS_DIMENSIONS";
-      throw e;
-    }
+    _get(Object.getPrototypeOf(FScene.prototype), 'constructor', this).call(this, { canvas: canvas, width: width, height: height });
 
-    this._objects = [];
-    this._selection = undefined;
+    this._prevMouseLeft = 0;
+    this._prevMouseTop = 0;
 
-    this._prevX = 0;
-    this._prevY = 0;
-
-    this._dirtyZIndexes = true;
-
-    var c = new _FCanvas.FCanvas(canvasID);
-    c.style.width = width + 'px';
-    c.style.height = height + 'px';
-    c.width = c.offsetWidth;
-    c.height = c.offsetHeight;
-
-    this._c = c;
-    this._ctx = this._c.getContext("2d");
+    this._c.tabIndex = 1000;
+    this._c.style.outline = "none";
 
     this._nextID = (function () {
       var index = 0;
@@ -864,6 +258,9 @@ var FScene = (function () {
         return index++;
       };
     })();
+
+    this._id = this._nextID();
+    this._scene = this;
 
     var __onMouseDown = this._onMouseDown.bind(this);
     this._c.onmousedown = __onMouseDown;
@@ -883,431 +280,141 @@ var FScene = (function () {
     var __onMouseOut = this._onMouseOut.bind(this);
     this._c.onmouseout = __onMouseOut;
 
-    this._request = new _FRequestFrame.FRequestFrame('request');
-    this._cancel = new _FRequestFrame.FRequestFrame('cancel');
+    var __onKeyDown = this._onKeyDown.bind(this);
+    this._c.onkeydown = __onKeyDown;
+
+    var __onKeyUp = this._onKeyUp.bind(this);
+    this._c.onkeyup = __onKeyUp;
+
+    this._request = requestFrame('request').bind(window);
+    this._cancel = requestFrame('cancel').bind(window);
 
     this.__tick = this._tick.bind(this);
     this._requestID = this._request(this.__tick);
   }
 
   _createClass(FScene, [{
-    key: "_onMouseDown",
+    key: '_onMouseDown',
     value: function _onMouseDown(e) {
       var _getMouseCoords2 = this._getMouseCoords(e);
 
-      var x = _getMouseCoords2.x;
-      var y = _getMouseCoords2.y;
+      var left = _getMouseCoords2.left;
+      var top = _getMouseCoords2.top;
 
-      var collisions = this._getMouseCollisions(x, y, { withObjects: true, withDeleteCtrls: true, withScaleCtrls: true });
-      var topObj = collisions.objects ? collisions.objects[0] : undefined;
-      var topScaleCtrl = collisions.scaleCtrls ? collisions.scaleCtrls[0] : undefined;
-      var topDeleteCtrl = collisions.deleteCtrls ? collisions.deleteCtrls[0] : undefined;
-
-      if (topScaleCtrl && topScaleCtrl.isSelected()) {
-        topScaleCtrl.selectedScaleCtrl = topScaleCtrl.scaleCtrlHitTest(x, y);
-      } else if ((!topDeleteCtrl || !topDeleteCtrl.isSelected()) && topObj) {
-        this.select(topObj);
-        topObj.dragged = true;
-      } else if (!topDeleteCtrl || !topDeleteCtrl.isSelected()) {
-        this.unselect(this._selection);
-      }
-
-      if (topObj) {
-        topObj.mouseDownCB(e);
-      }
-
-      this._prevX = x;
-      this._prevY = y;
-
-      return false;
+      this._prevMouseLeft = left;
+      this._prevMouseTop = top;
     }
   }, {
-    key: "_onMouseUp",
+    key: '_onMouseUp',
     value: function _onMouseUp(e) {
       var _getMouseCoords3 = this._getMouseCoords(e);
 
-      var x = _getMouseCoords3.x;
-      var y = _getMouseCoords3.y;
+      var left = _getMouseCoords3.left;
+      var top = _getMouseCoords3.top;
 
-      var collisions = this._getMouseCollisions(x, y, { withObjects: true, withDeleteCtrls: false, withScaleCtrls: false });
-      var topObj = collisions.objects ? collisions.objects[0] : undefined;
-
-      this._c.style.cursor = 'default';
-
-      if (topObj) {
-        topObj.mouseUpCB(e);
-      }
-
-      this._prevX = x;
-      this._prevY = y;
+      this._prevMouseLeft = left;
+      this._prevMouseTop = top;
     }
   }, {
-    key: "_onClick",
+    key: '_onClick',
     value: function _onClick(e) {
       var _getMouseCoords4 = this._getMouseCoords(e);
 
-      var x = _getMouseCoords4.x;
-      var y = _getMouseCoords4.y;
+      var left = _getMouseCoords4.left;
+      var top = _getMouseCoords4.top;
 
-      var collisions = this._getMouseCollisions(x, y, { withObjects: true, withDeleteCtrls: true, withScaleCtrls: false });
-      var topDeleteCtrl = collisions.deleteCtrls ? collisions.deleteCtrls[0] : undefined;
-      var topObj = collisions.objects ? collisions.objects[0] : undefined;
+      console.log(this.hitTest({ left: left, top: top }));
 
-      if (topDeleteCtrl && topDeleteCtrl.isSelected() && !topDeleteCtrl.dragged) {
-        this.remove(topDeleteCtrl);
-      }
-
-      if (this._selection) {
-        this._selection.dragged = false;
-        this._selection.selectedScaleCtrl = -1;
-      }
-
-      if (topObj) {
-        topObj.clickCB(e);
-      }
-
-      this._prevX = x;
-      this._prevY = y;
+      this._prevMouseLeft = left;
+      this._prevMouseTop = top;
     }
   }, {
-    key: "_onDoubleClick",
+    key: '_onDoubleClick',
     value: function _onDoubleClick(e) {
       var _getMouseCoords5 = this._getMouseCoords(e);
 
-      var x = _getMouseCoords5.x;
-      var y = _getMouseCoords5.y;
+      var left = _getMouseCoords5.left;
+      var top = _getMouseCoords5.top;
 
-      var collisions = this._getMouseCollisions(x, y, { withObjects: true, withScaleCtrls: false, withDeleteCtrls: false });
-      var topObj = collisions.objects ? collisions.objects[0] : undefined;
-
-      if (this._selection && this._selection.hitTest(y, x)) {
-        if (this._selection._onDoubleClick) {
-          this._selection._onDoubleClick(e, x, y);
-        }
-      }
-
-      if (topObj) {
-        topObj.doubleClickCB(e);
-      }
-
-      this._prevX = x;
-      this._prevY = y;
+      this._prevMouseLeft = left;
+      this._prevMouseTop = top;
     }
   }, {
-    key: "_onMouseMove",
+    key: '_onMouseMove',
     value: function _onMouseMove(e) {
       var _getMouseCoords6 = this._getMouseCoords(e);
 
-      var x = _getMouseCoords6.x;
-      var y = _getMouseCoords6.y;
+      var left = _getMouseCoords6.left;
+      var top = _getMouseCoords6.top;
 
-      var collisions = this._getMouseCollisions(x, y, { withObjects: true, withScaleCtrls: true, withDeleteCtrls: true });
-      var topObj = collisions.objects ? collisions.objects[0] : undefined;
-      var topScaleCtrl = collisions.scaleCtrls ? collisions.scaleCtrls[0] : undefined;
-      var topDeleteCtrl = collisions.deleteCtrls ? collisions.deleteCtrls[0] : undefined;
-
-      var canvasStyle = this._c.style;
-      canvasStyle.cursor = 'default';
-
-      var dx = x - this._prevX;
-      var dy = y - this._prevY;
-
-      var obj = this._selection;
-
-      if (obj && obj.selectedScaleCtrl > -1) {
-        obj.hasMouseOverScaleCtrl = true;
-
-        if (obj.selectedScaleCtrl > -1) {
-          obj.scale(dx, dy, obj.selectedScaleCtrl);
-        }
-      } else if (obj && obj.dragged) {
-        obj.hasMouseOver = true;
-        obj.translate(dx, dy);
-      } else {
-        for (var i in this._objects) {
-          var _obj = this._objects[i];
-
-          if (!_obj.isSelected()) {
-            _obj.hasMouseOver = false;
-            _obj.hasMouseOverDeleteCtrl = false;
-            _obj.hasMouseOverScaleCtrl = false;
-          }
-        }
-
-        if (topObj) {
-          topObj.hasMouseOver = true;
-
-          if (topObj.isSelected()) {
-            canvasStyle.cursor = 'move';
-          } else {
-            canvasStyle.cursor = 'pointer';
-          }
-        }
-
-        if (topScaleCtrl && topScaleCtrl.isSelected()) {
-          topScaleCtrl.hasMouseOverScaleCtrl = true;
-
-          var whichScaleCtrl = topScaleCtrl.scaleCtrlHitTest(x, y);
-          if (whichScaleCtrl === 0 || whichScaleCtrl === 2) {
-            canvasStyle.cursor = 'nwse-resize';
-          } else if (whichScaleCtrl === 1 || whichScaleCtrl === 3) {
-            canvasStyle.cursor = 'nesw-resize';
-          }
-        }
-
-        if (topDeleteCtrl && topDeleteCtrl.isSelected()) {
-          topDeleteCtrl.hasMouseOverDeleteCtrl = true;
-          canvasStyle.cursor = 'pointer';
-        }
-
-        if (this._selection) {
-          this._selection._controlsDirty = true;
-        }
-      }
-
-      if (topObj) {
-        topObj.mouseMoveCB(e);
-      }
-
-      this._prevX = x;
-      this._prevY = y;
+      this._prevMouseLeft = left;
+      this._prevMouseTop = top;
     }
   }, {
-    key: "_onMouseOut",
+    key: '_onMouseOut',
     value: function _onMouseOut(e) {
-      if (this._selection) {
-        this._selection.dragged = false;
-        this._selection.selectedScaleCtrl = -1;
-      }
+      var _getMouseCoords7 = this._getMouseCoords(e);
 
-      this._c.onmouseup(e);
+      var left = _getMouseCoords7.left;
+      var top = _getMouseCoords7.top;
+
+      this._prevMouseLeft = left;
+      this._prevMouseTop = top;
     }
   }, {
-    key: "_getMouseCoords",
-    value: function _getMouseCoords(e) {
-      var rect = this._c.getBoundingClientRect();
-      var x = e.clientX - rect.left;
-      var y = e.clientY - rect.top;
-
-      return { x: x, y: y };
+    key: '_onKeyDown',
+    value: function _onKeyDown(e) {
+      console.log('down');
     }
   }, {
-    key: "_getMouseCollisions",
-    value: function _getMouseCollisions(x, y) {
-      var _ref2 = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
-
-      var _ref2$withObjects = _ref2.withObjects;
-      var withObjects = _ref2$withObjects === undefined ? false : _ref2$withObjects;
-      var _ref2$withScaleCtrls = _ref2.withScaleCtrls;
-      var withScaleCtrls = _ref2$withScaleCtrls === undefined ? false : _ref2$withScaleCtrls;
-      var _ref2$withDeleteCtrls = _ref2.withDeleteCtrls;
-      var withDeleteCtrls = _ref2$withDeleteCtrls === undefined ? false : _ref2$withDeleteCtrls;
-
-      var collisions = { objects: undefined, scaleCtrls: undefined, deleteCtrls: undefined };
-
-      if (withObjects) {
-        var hitObjs = [];
-        for (var i in this._objects) {
-          var obj = this._objects[i];
-          if (obj.hitTest(y, x)) {
-            hitObjs.push(obj);
-          }
-        }
-
-        if (hitObjs.length > 0) {
-          hitObjs.sort(function (a, b) {
-            return b.zIndex - a.zIndex;
-          });
-
-          collisions.objects = hitObjs;
-        }
-      }
-
-      if (withScaleCtrls) {
-        var hitScaleCtrls = [];
-        for (var i in this._objects) {
-          var obj = this._objects[i];
-          if (obj.scaleCtrlHitTest(x, y) !== -1) {
-            hitScaleCtrls.push(obj);
-          }
-        }
-
-        if (hitScaleCtrls.length > 0) {
-          hitScaleCtrls.sort(function (a, b) {
-            return b.zIndex - a.zIndex;
-          });
-
-          collisions.scaleCtrls = hitScaleCtrls;
-        }
-      }
-
-      if (withDeleteCtrls) {
-        var hitDeleteCtrls = [];
-        for (var i in this._objects) {
-          var obj = this._objects[i];
-          if (obj.deleteCtrlHitTest(x, y)) {
-            hitDeleteCtrls.push(obj);
-          }
-        }
-
-        if (hitDeleteCtrls.length > 0) {
-          hitDeleteCtrls.sort(function (a, b) {
-            return b.zIndex - a.zIndex;
-          });
-
-          collisions.deleteCtrls = hitDeleteCtrls;
-        }
-      }
-
-      return collisions;
+    key: '_onKeyUp',
+    value: function _onKeyUp(e) {
+      console.log('up');
     }
   }, {
-    key: "_sortZIndexes",
-    value: function _sortZIndexes() {
-      this._objects.sort(function (a, b) {
-        return a.zIndex - b.zIndex;
-      });
-    }
-  }, {
-    key: "_tick",
+    key: '_tick',
     value: function _tick() {
-      var anyDirtyObjects = false;
-      var anyDirtyControls = false;
-      for (var i in this._objects) {
-        var obj = this._objects[i];
 
-        if (obj.dirty || obj.controlsDirty) {
-          anyDirtyObjects = obj.dirty;
-          anyDirtyControls = obj.controlsDirty;
-          break;
-        }
-      }
-
-      if (anyDirtyObjects || anyDirtyControls || this._dirtyZIndexes) {
-        this._ctx.clearRect(0, 0, this._c.width, this._c.height);
-
-        this._ctx.fillStyle = "#999999";
-        this._ctx.fillRect(0, 0, this._c.width, this._c.height);
-
-        if (this._dirtyZIndexes) {
-          this._sortZIndexes();
-          this._dirtyZIndexes = false;
-        }
-
-        for (var i in this._objects) {
-          var obj = this._objects[i];
-
-          obj.draw(this._ctx, true, false);
-        }
-
-        for (var i in this._objects) {
-          var obj = this._objects[i];
-
-          obj.draw(this._ctx, false, true);
-        }
-      }
+      // for(let child of this){
+      //   // Sort children by layer if necessary.
+      //   child.draw(this._ctx);
+      // }
 
       this._request(this.__tick);
     }
   }, {
-    key: "add",
-    value: function add(obj) {
-      obj._id = this._nextID();
-      obj._scene = this;
+    key: '_getMouseCoords',
+    value: function _getMouseCoords(e) {
+      var rect = this._c.getBoundingClientRect();
+      var left = e.clientX - rect.left;
+      var top = e.clientY - rect.top;
 
-      this._objects.push(obj);
-
-      this._dirtyZIndexes = true;
-    }
-  }, {
-    key: "remove",
-    value: function remove(obj) {
-      if (this.contains(obj)) {
-        this.unselect(obj);
-
-        var removedObj = this._objects.splice(this._objects.indexOf(obj), 1)[0];
-
-        this._dirtyZIndexes = true;
-
-        return removedObj;
-      }
-    }
-  }, {
-    key: "select",
-    value: function select(obj) {
-      if (this._selection) {
-        if (obj.isSameObjectAs(this._selection)) {
-          return;
-        }
-
-        this._selection.selected = false;
-        this._selection.dragged = false;
-        this._selection.selectedScaleCtrl = -1;
-
-        this._selection = undefined;
-      }
-
-      obj.selected = true;
-      obj.dragged = false;
-      obj.selectedScaleCtrl = -1;
-
-      this._selection = obj;
-    }
-  }, {
-    key: "unselect",
-    value: function unselect(obj) {
-      if (this._selection && this._selection.isSameObjectAs(obj)) {
-        this._selection.selected = false;
-        this._selection.dragged = false;
-        this._selection.selectedScaleCtrl = -1;
-
-        this._selection = undefined;
-      }
-    }
-  }, {
-    key: "contains",
-    value: function contains(obj) {
-      return this._objects.indexOf(obj) !== -1 ? true : false;
-    }
-  }, {
-    key: "toJSON",
-    value: function toJSON() {
-      var jsonObj = [];
-
-      this._sortZIndexes();
-
-      for (var i in this._objects) {
-        var obj = this._objects[i];
-
-        jsonObj.push(obj.toJSON());
-      }
-
-      return jsonObj;
+      return { left: left, top: top };
     }
   }]);
 
   return FScene;
-})();
+})(_FObject3['default']);
 
-exports.FScene = FScene;
+exports['default'] = FScene;
+module.exports = exports['default'];
 
-},{"./FCanvas":2,"./FRequestFrame":5}],7:[function(require,module,exports){
+},{"./FObject":1}],3:[function(require,module,exports){
 'use strict';
 
-var _FCanvas = require('./FCanvas');
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-var _FRequestFrame = require('./FRequestFrame');
+var _FObject = require('./FObject');
+
+var _FObject2 = _interopRequireDefault(_FObject);
 
 var _FScene = require('./FScene');
 
-var _FRect = require('./FRect');
+var _FScene2 = _interopRequireDefault(_FScene);
 
-var _FImage = require('./FImage');
+window.FL = {};
 
-window.FCanvas = _FCanvas.FCanvas;
-window.FRequestFrame = _FRequestFrame.FRequestFrame;
-window.FScene = _FScene.FScene;
-window.FRect = _FRect.FRect;
-window.FImage = _FImage.FImage;
+window.FL.FObject = _FObject2['default'];
+window.FL.FScene = _FScene2['default'];
 
-},{"./FCanvas":2,"./FImage":3,"./FRect":4,"./FRequestFrame":5,"./FScene":6}]},{},[7]);
+},{"./FObject":1,"./FScene":2}]},{},[3]);
