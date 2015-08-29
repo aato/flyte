@@ -1,41 +1,41 @@
-export default class FScene{
-  constructor({members = []} = {}){
-    this._objects = members;
+import FObject from './FObject';
 
-    this._top = undefined;
-    this._left = undefined;
-    this._width = undefined;
-    this._height = undefined;
+export default class FGroup extends FObject {
+  constructor({x = 0, y = 0, width = 100, height = 100, layer = 0, scaleX = 1, scaleY = 1, angle = 0, background = '#DDDDDD', canvas} = {}){
+    super({x, y, width, height, layer, scaleX, scaleY, angle, background, canvas});
 
-    this._calculateDimensions();
+    this._children = new Set();
   }
 
-  _calculateDimensions(){
-    if(this._objects.length === -1) return;
+  *[Symbol.iterator](){
+    var iter = this._children[Symbol.iterator]();
 
-    var mostLeft = undefined;
-    var mostTop = undefined;
-    var mostWide = undefined;
-    var mostHigh = undefined;
-    for(var i = 0; i < this._objects.length; i++){
-      var obj = this._objects[i];
-      mostLeft = mostLeft || obj.left;
-      mostTop = mostTop || obj.top;
-      mostWide = mostWide || obj.width;
-      mostHigh = mostHigh || obj.height;
-
-      mostLeft = obj.left < mostLeft ? obj.left : mostLeft;
-      mostTop = obj.top < mostTop ? obj.top : mostTop;
-      mostWide = obj.width < mostWide ? obj.width : mostWide;
-      mostHigh = obj.height < mostHigh ? obj.height : mostHigh;
+    var value = iter.next();
+    while(!value.done){
+      yield value.value;
+      value = iter.next();
     }
   }
 
-  containsExactly(objs){
-    if(objs.length !== this._objects.length) return false;
+  add(objs){
+    if(!Array.isArray(objs)){
+      objs = [objs];
+    }
 
-    this._objects.sort((a, b) => {
-      return
-    })
+    for(let obj of objs){
+
+    }
+  }
+
+  remove(objs){
+
+  }
+
+  clear(){
+
+  }
+
+  contains(obj){
+
   }
 }
