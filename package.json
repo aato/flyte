@@ -6,6 +6,7 @@
     "test": "mocha test/**/*.test.js",
     "build": "grunt build"
   },
+  "main": "src/main.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/aato/flyte"
