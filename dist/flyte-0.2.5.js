@@ -519,9 +519,12 @@ var FObject = (function () {
       }
 
       ctx.save();
-      // ctx.translate(this._center.x, this._center.y);
-      // ctx.scale(this._scale.x, this._scale.y);
-      ctx.drawImage(this._c, this._position.x, this._position.y);
+      // console.log(this._center);
+      ctx.translate(this._center.x, this._center.y);
+      ctx.scale(this._scale.x, this._scale.y);
+      ctx.rotate(this._rotation * Math.PI / 180);
+      ctx.drawImage(this._c, 0, 0, this._width, this._height, -this._width / 2, -this._height / 2, this._width, this._height);
+
       ctx.restore();
     }
   }, {
