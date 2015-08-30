@@ -20,7 +20,7 @@ return function WeakMap(){return get(this,arguments[0])}},{get:function get(key)
  * flyte - Object model for the HTML5 canvas - a lightweight, faster alternative to fabric.js
  * @version v0.2.5
  * @license MIT
- * @date 2015-08-29
+ * @date 2015-08-30
  * @preserve
  * Copyright (c) Alex Alksne <alex.alksne@gmail.com> 2015 All Rights Reserved.
  */
@@ -55,24 +55,15 @@ var FGroup = (function (_FObject) {
   function FGroup() {
     var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-    var _ref$x = _ref.x;
-    var x = _ref$x === undefined ? 0 : _ref$x;
-    var _ref$y = _ref.y;
-    var y = _ref$y === undefined ? 0 : _ref$y;
-    var _ref$width = _ref.width;
-    var width = _ref$width === undefined ? 100 : _ref$width;
-    var _ref$height = _ref.height;
-    var height = _ref$height === undefined ? 100 : _ref$height;
-    var _ref$layer = _ref.layer;
-    var layer = _ref$layer === undefined ? 0 : _ref$layer;
-    var _ref$scaleX = _ref.scaleX;
-    var scaleX = _ref$scaleX === undefined ? 1 : _ref$scaleX;
-    var _ref$scaleY = _ref.scaleY;
-    var scaleY = _ref$scaleY === undefined ? 1 : _ref$scaleY;
-    var _ref$angle = _ref.angle;
-    var angle = _ref$angle === undefined ? 0 : _ref$angle;
-    var _ref$background = _ref.background;
-    var background = _ref$background === undefined ? '#DDDDDD' : _ref$background;
+    var x = _ref.x;
+    var y = _ref.y;
+    var width = _ref.width;
+    var height = _ref.height;
+    var layer = _ref.layer;
+    var scaleX = _ref.scaleX;
+    var scaleY = _ref.scaleY;
+    var angle = _ref.angle;
+    var background = _ref.background;
     var canvas = _ref.canvas;
 
     _classCallCheck(this, FGroup);
@@ -113,54 +104,31 @@ var FGroup = (function (_FObject) {
       }, value, this);
     })
   }, {
-    key: '_updatePositionAndDimensions',
-    value: function _updatePositionAndDimensions() {
-      var leftMost = undefined;
-      var rightMost = undefined;
-      var topMost = undefined;
-      var bottomMost = undefined;
+    key: 'add',
+    value: function add(objs) {
+      if (!Array.isArray(objs)) {
+        objs = [objs];
+      }
 
+      var addedObjs = [];
+
+      // If this group doesn't belong to a scene.
+      if (!this._scene || this._id === undefined) return addedObjs;
+
+      // For each object we want to add.
       var _iteratorNormalCompletion = true;
       var _didIteratorError = false;
       var _iteratorError = undefined;
 
       try {
-        for (var _iterator = this[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var child = _step.value;
+        for (var _iterator = objs[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var obj = _step.value;
 
-          var childWorldBB = child.getWorldBoundingBox();
-          var _iteratorNormalCompletion2 = true;
-          var _didIteratorError2 = false;
-          var _iteratorError2 = undefined;
+          // If it doesn't derive from FGroupMember, ignore it.
+          if (!(obj instanceof _FGroupMember2['default'])) continue;
 
-          try {
-            for (var _iterator2 = childWorldBB[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-              var point = _step2.value;
-
-              if (!leftMost) leftMost = point.x;
-              if (!rightMost) rightMost = point.x;
-              if (!bottomMost) bottomMost = point.y;
-              if (!topMost) topMost = point.y;
-
-              leftMost = point.x < leftMost ? point.x : leftMost;
-              rightMost = point.x > rightMost ? point.x : rightMost;
-              topMost = point.y < topMost ? point.y : topMost;
-              bottomMost = point.y > bottomMost ? point.y : bottomMost;
-            }
-          } catch (err) {
-            _didIteratorError2 = true;
-            _iteratorError2 = err;
-          } finally {
-            try {
-              if (!_iteratorNormalCompletion2 && _iterator2['return']) {
-                _iterator2['return']();
-              }
-            } finally {
-              if (_didIteratorError2) {
-                throw _iteratorError2;
-              }
-            }
-          }
+          this._children.add(obj);
+          addedObjs.push(obj);
         }
       } catch (err) {
         _didIteratorError = true;
@@ -177,57 +145,6 @@ var FGroup = (function (_FObject) {
         }
       }
 
-      this._position.x = leftMost || this._position.x;
-      this._position.y = topMost || this._position.y;
-      this._width = leftMost && rightMost ? rightMost - leftMost : 0;
-      this._height = bottomMost && topMost ? bottomMost - topMost : 0;
-
-      this._calculateCenter();
-    }
-  }, {
-    key: 'add',
-    value: function add(objs) {
-      if (!Array.isArray(objs)) {
-        objs = [objs];
-      }
-
-      var addedObjs = [];
-
-      // If this group doesn't belong to a scene.
-      if (!this._scene || !this._id) return addedObjs;
-
-      // For each object we want to add.
-      var _iteratorNormalCompletion3 = true;
-      var _didIteratorError3 = false;
-      var _iteratorError3 = undefined;
-
-      try {
-        for (var _iterator3 = objs[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-          var obj = _step3.value;
-
-          // If it doesn't derive from FGroupMember, ignore it.
-          if (!(obj instanceof _FGroupMember2['default'])) continue;
-
-          this._children.add(obj);
-          addedObjs.push(obj);
-        }
-      } catch (err) {
-        _didIteratorError3 = true;
-        _iteratorError3 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion3 && _iterator3['return']) {
-            _iterator3['return']();
-          }
-        } finally {
-          if (_didIteratorError3) {
-            throw _iteratorError3;
-          }
-        }
-      }
-
-      this._updatePositionAndDimensions();
-
       return addedObjs;
     }
   }, {
@@ -240,16 +157,16 @@ var FGroup = (function (_FObject) {
       var removedObjs = [];
 
       // If this group doesn't belong to a scene.
-      if (!this._scene || !this._id) return addedObjs;
+      if (!this._scene || this._id === undefined) return addedObjs;
 
       // For each object we want to remove.
-      var _iteratorNormalCompletion4 = true;
-      var _didIteratorError4 = false;
-      var _iteratorError4 = undefined;
+      var _iteratorNormalCompletion2 = true;
+      var _didIteratorError2 = false;
+      var _iteratorError2 = undefined;
 
       try {
-        for (var _iterator4 = objs[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-          var obj = _step4.value;
+        for (var _iterator2 = objs[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+          var obj = _step2.value;
 
           // If this group doesn't contain this object, ignore it.
           if (!this._children.has(obj)) continue;
@@ -258,21 +175,19 @@ var FGroup = (function (_FObject) {
           removedObjs.push(obj);
         }
       } catch (err) {
-        _didIteratorError4 = true;
-        _iteratorError4 = err;
+        _didIteratorError2 = true;
+        _iteratorError2 = err;
       } finally {
         try {
-          if (!_iteratorNormalCompletion4 && _iterator4['return']) {
-            _iterator4['return']();
+          if (!_iteratorNormalCompletion2 && _iterator2['return']) {
+            _iterator2['return']();
           }
         } finally {
-          if (_didIteratorError4) {
-            throw _iteratorError4;
+          if (_didIteratorError2) {
+            throw _iteratorError2;
           }
         }
       }
-
-      this._updatePositionAndDimensions();
 
       return removedObjs;
     }
@@ -282,12 +197,10 @@ var FGroup = (function (_FObject) {
       var removedObjs = [];
 
       // If this group doesn't belong to a scene.
-      if (!this._scene || !this._id) return addedObjs;
+      if (!this._scene || this._id === undefined) return addedObjs;
 
       removedObjs = Array.from(this._children);
       this._children.clear();
-
-      this._updatePositionAndDimensions();
 
       return removedObjs;
     }
@@ -298,27 +211,27 @@ var FGroup = (function (_FObject) {
         objs = [objs];
       }
 
-      var _iteratorNormalCompletion5 = true;
-      var _didIteratorError5 = false;
-      var _iteratorError5 = undefined;
+      var _iteratorNormalCompletion3 = true;
+      var _didIteratorError3 = false;
+      var _iteratorError3 = undefined;
 
       try {
-        for (var _iterator5 = objs[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-          var obj = _step5.value;
+        for (var _iterator3 = objs[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+          var obj = _step3.value;
 
           if (!this._children.has(obj)) return false;
         }
       } catch (err) {
-        _didIteratorError5 = true;
-        _iteratorError5 = err;
+        _didIteratorError3 = true;
+        _iteratorError3 = err;
       } finally {
         try {
-          if (!_iteratorNormalCompletion5 && _iterator5['return']) {
-            _iterator5['return']();
+          if (!_iteratorNormalCompletion3 && _iterator3['return']) {
+            _iterator3['return']();
           }
         } finally {
-          if (_didIteratorError5) {
-            throw _iteratorError5;
+          if (_didIteratorError3) {
+            throw _iteratorError3;
           }
         }
       }
@@ -342,7 +255,7 @@ Object.defineProperty(exports, '__esModule', {
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-var _get = function get(_x3, _x4, _x5) { var _again = true; _function: while (_again) { var object = _x3, property = _x4, receiver = _x5; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x3 = parent; _x4 = property; _x5 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+var _get = function get(_x2, _x3, _x4) { var _again = true; _function: while (_again) { var object = _x2, property = _x3, receiver = _x4; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x2 = parent; _x3 = property; _x4 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
@@ -386,9 +299,8 @@ var FGroupMember = (function (_FObject) {
 
     _classCallCheck(this, FGroupMember);
 
-    _get(Object.getPrototypeOf(FGroupMember.prototype), 'constructor', this).call(this, { x: x, y: y, width: width, height: height, scaleX: scaleX, scaleY: scaleY, angle: angle, background: background, canvas: canvas });
+    _get(Object.getPrototypeOf(FGroupMember.prototype), 'constructor', this).call(this, { x: x, y: y, width: width, height: height, layer: layer, scaleX: scaleX, scaleY: scaleY, angle: angle, background: background, canvas: canvas });
 
-    this._position.layer = layer;
     this._mask = undefined;
     this._selector = undefined;
   }
@@ -400,22 +312,6 @@ var FGroupMember = (function (_FObject) {
 
       this._selector = selector;
       return true;
-    }
-  }, {
-    key: 'setPosition',
-    value: function setPosition() {
-      var _ref2 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-      var _ref2$x = _ref2.x;
-      var x = _ref2$x === undefined ? this._position.x : _ref2$x;
-      var _ref2$y = _ref2.y;
-      var y = _ref2$y === undefined ? this._position.y : _ref2$y;
-      var _ref2$layer = _ref2.layer;
-      var layer = _ref2$layer === undefined ? this._position.layer : _ref2$layer;
-
-      this['super']({ x: x, y: y });
-
-      this._position.layer = layer;
     }
   }]);
 
@@ -456,6 +352,8 @@ var FObject = (function () {
     var angle = _ref$angle === undefined ? 0 : _ref$angle;
     var _ref$background = _ref.background;
     var background = _ref$background === undefined ? '#DDDDDD' : _ref$background;
+    var _ref$layer = _ref.layer;
+    var layer = _ref$layer === undefined ? 0 : _ref$layer;
     var canvas = _ref.canvas;
 
     _classCallCheck(this, FObject);
@@ -463,7 +361,7 @@ var FObject = (function () {
     this._id = undefined;
     this._scene = undefined;
 
-    this._position = { x: x, y: y };
+    this._position = { x: x, y: y, layer: layer };
     this._rotation = angle;
     this._scale = { x: scaleX, y: scaleY };
 
@@ -473,17 +371,39 @@ var FObject = (function () {
     this._background = background;
     this._center = { x: undefined, y: undefined };
 
-    this._dirty = true;
-
     this._c = canvas || document.createElement('canvas');
     this._c.width = this._width;
     this._c.height = this._height;
     this._ctx = this._c.getContext('2d');
 
+    this._flags = {
+      canvasDirty: true
+    };
+
     this._calculateCenter();
   }
 
   _createClass(FObject, [{
+    key: 'getLayer',
+    value: function getLayer() {
+      return this._position.layer;
+    }
+  }, {
+    key: 'setLayer',
+    value: function setLayer() {
+      var layer = arguments.length <= 0 || arguments[0] === undefined ? this._position.layer : arguments[0];
+
+      if (layer === this._position.layer) return;
+
+      this._position.layer = layer;
+      if (this._scene) this._scene.setFlag('drawOrderDirty', true);
+    }
+  }, {
+    key: 'setFlag',
+    value: function setFlag(flag, value) {
+      this._flags[flag] = value;
+    }
+  }, {
     key: 'getWorldBoundingBox',
     value: function getWorldBoundingBox() {
       var topLeft = { px: this._position.x, py: this._position.y };
@@ -516,14 +436,18 @@ var FObject = (function () {
       var x = _ref3$x === undefined ? this._position.x : _ref3$x;
       var _ref3$y = _ref3.y;
       var y = _ref3$y === undefined ? this._position.y : _ref3$y;
+      var _ref3$layer = _ref3.layer;
+      var layer = _ref3$layer === undefined ? this._position.layer : _ref3$layer;
 
-      if (x === this._position.x && y === this._position.y) return;
+      if (x === this._position.x && y === this._position.y && layer === this._position.layer) return;
 
       this._position.x = x;
       this._position.y = y;
+      this._position.layer = layer;
 
-      this._dirty = true;
       this._calculateCenter();
+
+      if (this._scene) this._scene.setFlag('canvasDirty', true);
     }
   }, {
     key: 'setDimensions',
@@ -543,8 +467,9 @@ var FObject = (function () {
       this._c.width = width;
       this._c.height = height;
 
-      this._dirty = true;
       this._calculateCenter();
+      this.setFlag('canvasDirty', true);
+      if (this._scene) this._scene.setFlag('canvasDirty', true);
     }
   }, {
     key: 'setBackground',
@@ -553,8 +478,9 @@ var FObject = (function () {
 
       if (background === this._background) return;
 
-      this._dirty = true;
       this._background = background;
+      this.setFlag('canvasDirty', true);
+      if (this._scene) this._scene.setFlag('canvasDirty', true);
     }
   }, {
     key: '_calculateCenter',
@@ -587,21 +513,21 @@ var FObject = (function () {
   }, {
     key: 'draw',
     value: function draw(ctx) {
-      if (this._dirty) {
+      if (this._flags.canvasDirty) {
         this._render();
-        this._dirty = false;
+        this.setFlag('canvasDirty', false);
       }
 
       ctx.save();
-      ctx.translate(this._center.x, this._center.y);
-      ctx.scale(this._scale.x, this._scale.y);
-
+      // ctx.translate(this._center.x, this._center.y);
+      // ctx.scale(this._scale.x, this._scale.y);
       ctx.drawImage(this._c, this._position.x, this._position.y);
       ctx.restore();
     }
   }, {
     key: '_render',
     value: function _render() {
+      console.log('BOX RENDER');
       this._ctx.save();
       this._ctx.clearRect(0, 0, this._width, this._height);
       this._ctx.fillStyle = this._background;
@@ -743,8 +669,12 @@ var FScene = (function (_FGroup) {
     this._request = requestFrame('request').bind(window);
     this._cancel = requestFrame('cancel').bind(window);
 
-    this.__tick = this._tick.bind(this);
-    this._requestID = this._request(this.__tick);
+    this._draw = this.draw.bind(this, this._ctx);
+    this._requestID = this._request(this._draw);
+
+    this._drawOrder = [];
+
+    this._flags.drawOrderDirty = true;
   }
 
   _createClass(FScene, [{
@@ -784,7 +714,7 @@ var FScene = (function (_FGroup) {
         }
       }
 
-      var addedObjs = this['super'].add(toAdd);
+      var addedObjs = _get(Object.getPrototypeOf(FScene.prototype), 'add', this).call(this, toAdd);
       var _iteratorNormalCompletion2 = true;
       var _didIteratorError2 = false;
       var _iteratorError2 = undefined;
@@ -813,6 +743,10 @@ var FScene = (function (_FGroup) {
         }
       }
 
+      if (addedObjs.length > 0) {
+        this._calculateDrawOrder();
+      }
+
       return addedObjs;
     }
   }, {
@@ -822,7 +756,7 @@ var FScene = (function (_FGroup) {
         objs = [objs];
       }
 
-      var removedObjs = this['super'].remove(objs);
+      var removedObjs = _get(Object.getPrototypeOf(FScene.prototype), 'remove', this).call(this, objs);
       var _iteratorNormalCompletion3 = true;
       var _didIteratorError3 = false;
       var _iteratorError3 = undefined;
@@ -851,12 +785,16 @@ var FScene = (function (_FGroup) {
         }
       }
 
+      if (removedObjs.length > 0) {
+        this._calculateDrawOrder();
+      }
+
       return removedObjs;
     }
   }, {
     key: 'clear',
     value: function clear() {
-      var removedObjs = this['super'].clear();
+      var removedObjs = _get(Object.getPrototypeOf(FScene.prototype), 'clear', this).call(this);
       var _iteratorNormalCompletion4 = true;
       var _didIteratorError4 = false;
       var _iteratorError4 = undefined;
@@ -885,7 +823,28 @@ var FScene = (function (_FGroup) {
         }
       }
 
+      this._drawOrder = [];
+
       return removedObjs;
+    }
+  }, {
+    key: 'select',
+    value: function select(objs) {
+      return this._selection.add(objs);
+    }
+  }, {
+    key: 'unselect',
+    value: function unselect(objs) {
+      if (!objs) return this._selection.clear();
+
+      return this._selection.remove(objs);
+    }
+  }, {
+    key: '_calculateDrawOrder',
+    value: function _calculateDrawOrder() {
+      this._drawOrder = Array.from(this._children).sort(function (a, b) {
+        return a.layer - b.layer;
+      });
     }
   }, {
     key: '_onMouseDown',
@@ -966,15 +925,55 @@ var FScene = (function (_FGroup) {
       console.log('up');
     }
   }, {
-    key: '_tick',
-    value: function _tick() {
+    key: 'draw',
+    value: function draw(ctx) {
+      _get(Object.getPrototypeOf(FScene.prototype), 'draw', this).call(this, ctx);
 
-      // for(let child of this){
-      //   // Sort children by layer if necessary.
-      //   child.draw(this._ctx);
-      // }
+      this._request(this._draw);
+    }
+  }, {
+    key: '_render',
+    value: function _render() {
+      console.log('SCENE RENDER');
 
-      this._request(this.__tick);
+      this._ctx.save();
+      this._ctx.clearRect(0, 0, this._width, this._height);
+      this._ctx.fillStyle = this._background;
+      this._ctx.fillRect(0, 0, this._width, this._height);
+
+      if (this._flags.drawOrderDirty) {
+        this._calculateDrawOrder();
+        this.setFlag('drawOrderDirty', false);
+      }
+
+      var _iteratorNormalCompletion5 = true;
+      var _didIteratorError5 = false;
+      var _iteratorError5 = undefined;
+
+      try {
+        for (var _iterator5 = this._drawOrder[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+          var child = _step5.value;
+
+          child.draw(this._ctx);
+        }
+
+        // Update this object's canvas here.
+      } catch (err) {
+        _didIteratorError5 = true;
+        _iteratorError5 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion5 && _iterator5['return']) {
+            _iterator5['return']();
+          }
+        } finally {
+          if (_didIteratorError5) {
+            throw _iteratorError5;
+          }
+        }
+      }
+
+      this._ctx.restore();
     }
   }, {
     key: '_getMouseCoords',
@@ -1020,23 +1019,17 @@ var FSelection = (function (_FGroup) {
   function FSelection() {
     var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-    var _ref$x = _ref.x;
-    var x = _ref$x === undefined ? 0 : _ref$x;
-    var _ref$y = _ref.y;
-    var y = _ref$y === undefined ? 0 : _ref$y;
-    var _ref$width = _ref.width;
-    var width = _ref$width === undefined ? 100 : _ref$width;
-    var _ref$height = _ref.height;
-    var height = _ref$height === undefined ? 100 : _ref$height;
-    var _ref$scaleX = _ref.scaleX;
-    var scaleX = _ref$scaleX === undefined ? 1 : _ref$scaleX;
-    var _ref$scaleY = _ref.scaleY;
-    var scaleY = _ref$scaleY === undefined ? 1 : _ref$scaleY;
-    var _ref$angle = _ref.angle;
-    var angle = _ref$angle === undefined ? 0 : _ref$angle;
-    var _ref$background = _ref.background;
-    var background = _ref$background === undefined ? '#DDDDDD' : _ref$background;
+    var x = _ref.x;
+    var y = _ref.y;
+    var width = _ref.width;
+    var height = _ref.height;
+    var layer = _ref.layer;
+    var scaleX = _ref.scaleX;
+    var scaleY = _ref.scaleY;
+    var angle = _ref.angle;
+    var background = _ref.background;
     var canvas = _ref.canvas;
+    var children = _ref.children;
 
     _classCallCheck(this, FSelection);
 
@@ -1044,26 +1037,54 @@ var FSelection = (function (_FGroup) {
   }
 
   _createClass(FSelection, [{
-    key: 'add',
-    value: function add(objs) {
-      if (!Array.isArray(objs)) {
-        objs = [objs];
-      }
-
-      var toAdd = [];
+    key: '_updatePositionAndDimensions',
+    value: function _updatePositionAndDimensions() {
+      var leftMost = undefined;
+      var rightMost = undefined;
+      var topMost = undefined;
+      var bottomMost = undefined;
 
       var _iteratorNormalCompletion = true;
       var _didIteratorError = false;
       var _iteratorError = undefined;
 
       try {
-        for (var _iterator = objs[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var obj = _step.value;
+        for (var _iterator = this[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var child = _step.value;
 
-          // If it belongs to a different scene, ignore it.
-          if (obj.getScene() !== this._scene) continue;
+          var childWorldBB = child.getWorldBoundingBox();
+          var _iteratorNormalCompletion2 = true;
+          var _didIteratorError2 = false;
+          var _iteratorError2 = undefined;
 
-          toAdd.push(obj);
+          try {
+            for (var _iterator2 = childWorldBB[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+              var point = _step2.value;
+
+              if (!leftMost) leftMost = point.x;
+              if (!rightMost) rightMost = point.x;
+              if (!bottomMost) bottomMost = point.y;
+              if (!topMost) topMost = point.y;
+
+              leftMost = point.x < leftMost ? point.x : leftMost;
+              rightMost = point.x > rightMost ? point.x : rightMost;
+              topMost = point.y < topMost ? point.y : topMost;
+              bottomMost = point.y > bottomMost ? point.y : bottomMost;
+            }
+          } catch (err) {
+            _didIteratorError2 = true;
+            _iteratorError2 = err;
+          } finally {
+            try {
+              if (!_iteratorNormalCompletion2 && _iterator2['return']) {
+                _iterator2['return']();
+              }
+            } finally {
+              if (_didIteratorError2) {
+                throw _iteratorError2;
+              }
+            }
+          }
         }
       } catch (err) {
         _didIteratorError = true;
@@ -1080,51 +1101,34 @@ var FSelection = (function (_FGroup) {
         }
       }
 
-      var addedObjs = this['super'].add(toAdd);
-      var _iteratorNormalCompletion2 = true;
-      var _didIteratorError2 = false;
-      var _iteratorError2 = undefined;
+      this._position.x = leftMost || this._position.x;
+      this._position.y = topMost || this._position.y;
+      this._width = leftMost && rightMost ? rightMost - leftMost : 0;
+      this._height = bottomMost && topMost ? bottomMost - topMost : 0;
 
-      try {
-        for (var _iterator2 = addedObjs[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-          var obj = _step2.value;
-
-          obj.setSelector(this);
-        }
-      } catch (err) {
-        _didIteratorError2 = true;
-        _iteratorError2 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion2 && _iterator2['return']) {
-            _iterator2['return']();
-          }
-        } finally {
-          if (_didIteratorError2) {
-            throw _iteratorError2;
-          }
-        }
-      }
-
-      return addedObjs;
+      this._calculateCenter();
     }
   }, {
-    key: 'remove',
-    value: function remove(objs) {
+    key: 'add',
+    value: function add(objs) {
       if (!Array.isArray(objs)) {
         objs = [objs];
       }
 
-      var removedObjs = this['super'].remove(objs);
+      var toAdd = [];
+
       var _iteratorNormalCompletion3 = true;
       var _didIteratorError3 = false;
       var _iteratorError3 = undefined;
 
       try {
-        for (var _iterator3 = removedObjs[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+        for (var _iterator3 = objs[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
           var obj = _step3.value;
 
-          obj.setSelector(undefined);
+          // If it belongs to a different scene, ignore it.
+          if (obj.getScene() !== this._scene) continue;
+
+          toAdd.push(obj);
         }
       } catch (err) {
         _didIteratorError3 = true;
@@ -1141,21 +1145,16 @@ var FSelection = (function (_FGroup) {
         }
       }
 
-      return removedObjs;
-    }
-  }, {
-    key: 'clear',
-    value: function clear() {
-      var removedObjs = this['super'].clear();
+      var addedObjs = _get(Object.getPrototypeOf(FSelection.prototype), 'add', this).call(this, toAdd);
       var _iteratorNormalCompletion4 = true;
       var _didIteratorError4 = false;
       var _iteratorError4 = undefined;
 
       try {
-        for (var _iterator4 = removedObjs[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+        for (var _iterator4 = addedObjs[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
           var obj = _step4.value;
 
-          obj.setSelector(undefined);
+          obj.setSelector(this);
         }
       } catch (err) {
         _didIteratorError4 = true;
@@ -1171,6 +1170,78 @@ var FSelection = (function (_FGroup) {
           }
         }
       }
+
+      this._updatePositionAndDimensions();
+
+      return addedObjs;
+    }
+  }, {
+    key: 'remove',
+    value: function remove(objs) {
+      if (!Array.isArray(objs)) {
+        objs = [objs];
+      }
+
+      var removedObjs = _get(Object.getPrototypeOf(FSelection.prototype), 'remove', this).call(this, objs);
+      var _iteratorNormalCompletion5 = true;
+      var _didIteratorError5 = false;
+      var _iteratorError5 = undefined;
+
+      try {
+        for (var _iterator5 = removedObjs[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+          var obj = _step5.value;
+
+          obj.setSelector(undefined);
+        }
+      } catch (err) {
+        _didIteratorError5 = true;
+        _iteratorError5 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion5 && _iterator5['return']) {
+            _iterator5['return']();
+          }
+        } finally {
+          if (_didIteratorError5) {
+            throw _iteratorError5;
+          }
+        }
+      }
+
+      this._updatePositionAndDimensions();
+
+      return removedObjs;
+    }
+  }, {
+    key: 'clear',
+    value: function clear() {
+      var removedObjs = _get(Object.getPrototypeOf(FSelection.prototype), 'clear', this).call(this);
+      var _iteratorNormalCompletion6 = true;
+      var _didIteratorError6 = false;
+      var _iteratorError6 = undefined;
+
+      try {
+        for (var _iterator6 = removedObjs[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+          var obj = _step6.value;
+
+          obj.setSelector(undefined);
+        }
+      } catch (err) {
+        _didIteratorError6 = true;
+        _iteratorError6 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion6 && _iterator6['return']) {
+            _iterator6['return']();
+          }
+        } finally {
+          if (_didIteratorError6) {
+            throw _iteratorError6;
+          }
+        }
+      }
+
+      this._updatePositionAndDimensions();
 
       return removedObjs;
     }

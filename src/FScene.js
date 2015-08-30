@@ -76,7 +76,7 @@ export default class FScene extends FGroup{
       toAdd.push(obj);
     }
 
-    var addedObjs = this.super.add(toAdd);
+    var addedObjs = super.add(toAdd);
     for(let obj of addedObjs){
       // Assign the object a unique ID within the scene.
       obj.setID(this._nextID());
@@ -96,7 +96,7 @@ export default class FScene extends FGroup{
       objs = [objs];
     }
 
-    var removedObjs = this.super.remove(objs);
+    var removedObjs = super.remove(objs);
     for(let obj of removedObjs){
       // Remove this object's ID.
       obj.setID(undefined);
@@ -112,7 +112,7 @@ export default class FScene extends FGroup{
   }
 
   clear(){
-    var removedObjs = this.super.clear();
+    var removedObjs = super.clear();
     for(let obj of removedObjs){
       // Remove this object's ID.
       obj.setID(undefined);
@@ -205,7 +205,15 @@ export default class FScene extends FGroup{
     console.log('up');
   }
 
+  draw(ctx){
+    super.draw(ctx);
+
+    this._request(this._draw);
+  }
+
   _render(){
+    console.log('SCENE RENDER');
+
     this._ctx.save();
       this._ctx.clearRect(0, 0, this._width, this._height);
       this._ctx.fillStyle = this._background;

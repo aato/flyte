@@ -18,6 +18,11 @@
       var c = document.getElementById('myScene');
 
       var scene = new FL.FScene({canvas: c});
+      var o = new FL.FGroupMember({background: 'red'});
+      scene.add(o);
+
+      o.setPosition({x: 200, y: 50});
+      o.setDimensions({height: 200})
 
       // var rect = new FL.FRect({width: 400, height: 300, onchange: rectChanged});
       // scene.add(rect);
