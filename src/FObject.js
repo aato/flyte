@@ -11,7 +11,7 @@ export default class FObject{
     this._height      = height;
 
     this._background  = background;
-    this._center      = {x: -1, y: -1};
+    this._center      = {x: undefined, y: undefined};
 
     this._dirty       = true;
 
@@ -21,6 +21,26 @@ export default class FObject{
     this._ctx         = this._c.getContext('2d');
 
     this._calculateCenter();
+  }
+
+  getWorldBoundingBox(){
+    var topLeft = {px : this._position.x, py : this._position.y};
+    var topRight = {px : this._position.x + this._width, py : this._position.y};
+    var bottomRight = {px : this._position.x + this._width, py : this._position.y + this._height};
+    var bottomLeft = {px : this._position.x, py : this._position.y + this.height};
+
+    var theta = this._rotation * (Math.PI / 180);
+    var ox = this._center.x;
+    var oy = this._center.y;
+
+    var rot = ({px, py}) => {
+      var pxPrime = Math.cos(theta) * (px - ox) - Math.sin(theta) * (py - oy) + ox;
+      var pyPrime = Math.sin(theta) * (px - ox) + Math.cos(theta) * (py - oy) + oy;
+
+      return {x: pxPrime, y: pyPrime};
+    };
+
+    return [rot(topLeft), rot(topRight), rot(bottomRight), rot(bottomLeft)];
   }
 
   setPosition({x = this._position.x, y = this._position.y} = {}){
