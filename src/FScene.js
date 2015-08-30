@@ -54,10 +54,12 @@ export default class FScene extends FGroup{
     this._request = requestFrame('request').bind(window);
     this._cancel = requestFrame('cancel').bind(window);
 
-    this.__tick = this._tick.bind(this);
-    this._requestID = this._request(this.__tick);
+    this._draw = this.draw.bind(this, this._ctx);
+    this._requestID = this._request(this._draw);
 
     this._drawOrder = [];
+
+    this._flags.drawOrderDirty = true;
   }
 
   add(objs){
@@ -82,7 +84,9 @@ export default class FScene extends FGroup{
       obj.setScene(this)
     }
 
-    this._calculateDrawOrder();
+    if(addedObjs.length > 0){
+      this._calculateDrawOrder();
+    }
 
     return addedObjs;
   }
@@ -100,7 +104,9 @@ export default class FScene extends FGroup{
       obj.setScene(undefined)
     }
 
-    this._calculateDrawOrder();
+    if(removedObjs.length > 0){
+      this._calculateDrawOrder();
+    }
 
     return removedObjs;
   }
@@ -199,14 +205,23 @@ export default class FScene extends FGroup{
     console.log('up');
   }
 
-  _tick(){
+  _render(){
+    this._ctx.save();
+      this._ctx.clearRect(0, 0, this._width, this._height);
+      this._ctx.fillStyle = this._background;
+      this._ctx.fillRect(0, 0, this._width, this._height);
 
-    // for(let child of this){
-    //   // Sort children by layer if necessary.
-    //   child.draw(this._ctx);
-    // }
+      if(this._flags.drawOrderDirty){
+        this._calculateDrawOrder();
+        this.setFlag('drawOrderDirty', false);
+      }
 
-    this._request(this.__tick);
+      for(let child of this._drawOrder){
+        child.draw(this._ctx);
+      }
+
+      // Update this object's canvas here.
+    this._ctx.restore();
   }
 
   _getMouseCoords(e){

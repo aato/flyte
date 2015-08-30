@@ -13,14 +13,20 @@ export default class FObject{
     this._background  = background;
     this._center      = {x: undefined, y: undefined};
 
-    this._dirty       = true;
-
     this._c           = canvas || document.createElement('canvas');
     this._c.width     = this._width;
     this._c.height    = this._height;
     this._ctx         = this._c.getContext('2d');
 
+    this._flags       = {
+                        canvasDirty: true
+                      }
+
     this._calculateCenter();
+  }
+
+  setFlag(flag, value){
+    this._flags[flag] = value;
   }
 
   getWorldBoundingBox(){
@@ -49,8 +55,9 @@ export default class FObject{
     this._position.x = x;
     this._position.y = y;
 
-    this._dirty = true;
     this._calculateCenter();
+
+    if(this._scene) this._scene.setFlag('canvasDirty', true);
   }
 
   setDimensions({width = this._width, height = this._height} = {}){
@@ -62,15 +69,17 @@ export default class FObject{
     this._c.width = width;
     this._c.height = height;
 
-    this._dirty = true;
     this._calculateCenter();
+    this.setFlag('canvasDirty', true);
+    if(this._scene) this._scene.setFlag('canvasDirty', true);
   }
 
   setBackground(background = this._background){
     if(background === this._background) return;
 
-    this._dirty = true;
     this._background = background;
+    this.setFlag('canvasDirty', true);
+    if(this._scene) this._scene.setFlag('canvasDirty', true);
   }
 
   _calculateCenter(){
@@ -97,9 +106,9 @@ export default class FObject{
   }
 
   draw(ctx){
-    if(this._dirty){
+    if(this._flags.canvasDirty){
       this._render();
-      this._dirty = false;
+      this.setFlag('canvasDirty', false);
     }
 
     ctx.save();
