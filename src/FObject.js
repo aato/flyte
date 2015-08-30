@@ -1,9 +1,9 @@
 export default class FObject{
-  constructor({x = 0, y = 0, width = 100, height = 100, scaleX = 1, scaleY = 1, angle = 0, background = '#DDDDDD', canvas} = {}){
+  constructor({x = 0, y = 0, width = 100, height = 100, scaleX = 1, scaleY = 1, angle = 0, background = '#DDDDDD', layer = 0, canvas} = {}){
     this._id          = undefined;
     this._scene       = undefined;
 
-    this._position    = {x: x, y: y};
+    this._position    = {x: x, y: y, layer: layer};
     this._rotation    = angle;
     this._scale       = {x: scaleX, y: scaleY};
 
@@ -23,6 +23,17 @@ export default class FObject{
                       }
 
     this._calculateCenter();
+  }
+
+  getLayer(){
+    return this._position.layer;
+  }
+
+  setLayer(layer = this._position.layer){
+    if(layer === this._position.layer) return;
+
+    this._position.layer = layer;
+    if(this._scene) this._scene.setFlag('drawOrderDirty', true);
   }
 
   setFlag(flag, value){
@@ -49,11 +60,12 @@ export default class FObject{
     return [rot(topLeft), rot(topRight), rot(bottomRight), rot(bottomLeft)];
   }
 
-  setPosition({x = this._position.x, y = this._position.y} = {}){
-    if(x === this._position.x && y === this._position.y) return;
+  setPosition({x = this._position.x, y = this._position.y, layer = this._position.layer} = {}){
+    if(x === this._position.x && y === this._position.y && layer === this._position.layer) return;
 
     this._position.x = x;
     this._position.y = y;
+    this._position.layer = layer;
 
     this._calculateCenter();
 
@@ -112,14 +124,14 @@ export default class FObject{
     }
 
     ctx.save();
-      ctx.translate(this._center.x, this._center.y);
-      ctx.scale(this._scale.x, this._scale.y);
-
+      // ctx.translate(this._center.x, this._center.y);
+      // ctx.scale(this._scale.x, this._scale.y);
       ctx.drawImage(this._c, this._position.x, this._position.y);
     ctx.restore();
   }
 
   _render(){
+    console.log('BOX RENDER');
     this._ctx.save();
       this._ctx.clearRect(0, 0, this._width, this._height);
       this._ctx.fillStyle = this._background;
