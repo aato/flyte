@@ -1,4 +1,5 @@
 import FGroup from './FGroup';
+import FSelection from './FSelection';
 
 export default class FScene extends FGroup{
   constructor({canvas, width = 600, height = 300} = {}){
@@ -6,6 +7,8 @@ export default class FScene extends FGroup{
 
     this._prevMouseX = 0;
     this._prevMouseY = 0;
+
+    this._selection = new FSelection();
 
     // Allows us to listen for keydown/up event
     this._c.tabIndex = 9999;
@@ -53,6 +56,8 @@ export default class FScene extends FGroup{
 
     this.__tick = this._tick.bind(this);
     this._requestID = this._request(this.__tick);
+
+    this._drawOrder = [];
   }
 
   add(objs){
@@ -77,6 +82,8 @@ export default class FScene extends FGroup{
       obj.setScene(this)
     }
 
+    this._calculateDrawOrder();
+
     return addedObjs;
   }
 
@@ -93,6 +100,8 @@ export default class FScene extends FGroup{
       obj.setScene(undefined)
     }
 
+    this._calculateDrawOrder();
+
     return removedObjs;
   }
 
@@ -105,12 +114,26 @@ export default class FScene extends FGroup{
       obj.setScene(undefined)
     }
 
+    this._drawOrder = [];
+
     return removedObjs;
   }
 
+  select(objs){
+    return this._selection.add(objs);
+  }
 
+  unselect(objs){
+    if(!objs) return this._selection.clear();
 
+    return this._selection.remove(objs);
+  }
 
+  _calculateDrawOrder(){
+    this._drawOrder = Array.from(this._children).sort((a, b) => {
+      return a.layer - b.layer;
+    })
+  }
 
 
 

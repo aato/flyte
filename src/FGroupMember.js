@@ -7,13 +7,13 @@ export default class FGroupMember extends FObject {
 
     this._position.layer = layer;
     this._mask = undefined;
-    this._selection = undefined;
+    this._selector = undefined;
   }
 
-  setSelection(selection){
-    if(!(selection instanceof FSelection)) return false;
+  setSelector(selector){
+    if(!(selector instanceof FSelection)) return false;
 
-    this._selection = selection;
+    this._selector = selector;
     return true;
   }
 
