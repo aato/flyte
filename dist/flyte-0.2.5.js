@@ -20,7 +20,7 @@ return function WeakMap(){return get(this,arguments[0])}},{get:function get(key)
  * flyte - Object model for the HTML5 canvas - a lightweight, faster alternative to fabric.js
  * @version v0.2.5
  * @license MIT
- * @date 2015-08-28
+ * @date 2015-08-29
  * @preserve
  * Copyright (c) Alex Alksne <alex.alksne@gmail.com> 2015 All Rights Reserved.
  */
@@ -32,6 +32,267 @@ Object.defineProperty(exports, '__esModule', {
 });
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+var _get = function get(_x2, _x3, _x4) { var _again = true; _function: while (_again) { var object = _x2, property = _x3, receiver = _x4; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x2 = parent; _x3 = property; _x4 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var _FObject2 = require('./FObject');
+
+var _FObject3 = _interopRequireDefault(_FObject2);
+
+var _FGroupMember = require('./FGroupMember');
+
+var _FGroupMember2 = _interopRequireDefault(_FGroupMember);
+
+var FGroup = (function (_FObject) {
+  _inherits(FGroup, _FObject);
+
+  function FGroup() {
+    var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+    var _ref$x = _ref.x;
+    var x = _ref$x === undefined ? 0 : _ref$x;
+    var _ref$y = _ref.y;
+    var y = _ref$y === undefined ? 0 : _ref$y;
+    var _ref$width = _ref.width;
+    var width = _ref$width === undefined ? 100 : _ref$width;
+    var _ref$height = _ref.height;
+    var height = _ref$height === undefined ? 100 : _ref$height;
+    var _ref$layer = _ref.layer;
+    var layer = _ref$layer === undefined ? 0 : _ref$layer;
+    var _ref$scaleX = _ref.scaleX;
+    var scaleX = _ref$scaleX === undefined ? 1 : _ref$scaleX;
+    var _ref$scaleY = _ref.scaleY;
+    var scaleY = _ref$scaleY === undefined ? 1 : _ref$scaleY;
+    var _ref$angle = _ref.angle;
+    var angle = _ref$angle === undefined ? 0 : _ref$angle;
+    var _ref$background = _ref.background;
+    var background = _ref$background === undefined ? '#DDDDDD' : _ref$background;
+    var canvas = _ref.canvas;
+
+    _classCallCheck(this, FGroup);
+
+    _get(Object.getPrototypeOf(FGroup.prototype), 'constructor', this).call(this, { x: x, y: y, width: width, height: height, layer: layer, scaleX: scaleX, scaleY: scaleY, angle: angle, background: background, canvas: canvas });
+
+    this._children = new Set();
+  }
+
+  _createClass(FGroup, [{
+    key: Symbol.iterator,
+    value: regeneratorRuntime.mark(function value() {
+      var iter, value;
+      return regeneratorRuntime.wrap(function value$(context$2$0) {
+        while (1) switch (context$2$0.prev = context$2$0.next) {
+          case 0:
+            iter = this._children[Symbol.iterator]();
+            value = iter.next();
+
+          case 2:
+            if (value.done) {
+              context$2$0.next = 8;
+              break;
+            }
+
+            context$2$0.next = 5;
+            return value.value;
+
+          case 5:
+            value = iter.next();
+            context$2$0.next = 2;
+            break;
+
+          case 8:
+          case 'end':
+            return context$2$0.stop();
+        }
+      }, value, this);
+    })
+  }, {
+    key: 'add',
+    value: function add(objs) {
+      if (!Array.isArray(objs)) {
+        objs = [objs];
+      }
+
+      var addedObjs = [];
+
+      // If this group doesn't belong to a scene.
+      if (!this._scene || !this._id) return addedObjs;
+
+      // For each object we want to add.
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
+
+      try {
+        for (var _iterator = objs[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var obj = _step.value;
+
+          // If it doesn't derive from FGroupMember, ignore it.
+          if (!(obj instanceof _FGroupMember2['default'])) continue;
+          // If it already belongs to a scene, ignore it.
+          if (obj.getScene() && obj.getID()) continue;
+
+          // Assign the object a unique ID within the scene.
+          var id = this._scene.nextID();
+          obj.setID(id);
+          // Assign this scene to the object.
+          obj.setScene(this._scene);
+
+          // Does this object have any controls?
+          var _iteratorNormalCompletion2 = true;
+          var _didIteratorError2 = false;
+          var _iteratorError2 = undefined;
+
+          try {
+            for (var _iterator2 = obj.getControls()[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+              var control = _step2.value;
+
+              // Give each control a unique ID within the scene.
+              var _id = this._scene.nextID();
+              control.setID(_id);
+              // Add this control to the scene.
+              control.setScene(this._scene);
+            }
+          } catch (err) {
+            _didIteratorError2 = true;
+            _iteratorError2 = err;
+          } finally {
+            try {
+              if (!_iteratorNormalCompletion2 && _iterator2['return']) {
+                _iterator2['return']();
+              }
+            } finally {
+              if (_didIteratorError2) {
+                throw _iteratorError2;
+              }
+            }
+          }
+
+          this._children.add(obj);
+        }
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator['return']) {
+            _iterator['return']();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
+        }
+      }
+
+      return addedObjs;
+    }
+  }, {
+    key: 'remove',
+    value: function remove(objs) {}
+  }, {
+    key: 'clear',
+    value: function clear() {}
+  }, {
+    key: 'contains',
+    value: function contains(obj) {}
+  }]);
+
+  return FGroup;
+})(_FObject3['default']);
+
+exports['default'] = FGroup;
+module.exports = exports['default'];
+
+},{"./FGroupMember":2,"./FObject":3}],2:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
+
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+var _get = function get(_x2, _x3, _x4) { var _again = true; _function: while (_again) { var object = _x2, property = _x3, receiver = _x4; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x2 = parent; _x3 = property; _x4 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var _FObject2 = require('./FObject');
+
+var _FObject3 = _interopRequireDefault(_FObject2);
+
+var _FGroup = require('./FGroup');
+
+var _FGroup2 = _interopRequireDefault(_FGroup);
+
+var FGroupMember = (function (_FObject) {
+  _inherits(FGroupMember, _FObject);
+
+  function FGroupMember() {
+    var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+    var _ref$x = _ref.x;
+    var x = _ref$x === undefined ? 0 : _ref$x;
+    var _ref$y = _ref.y;
+    var y = _ref$y === undefined ? 0 : _ref$y;
+    var _ref$width = _ref.width;
+    var width = _ref$width === undefined ? 100 : _ref$width;
+    var _ref$height = _ref.height;
+    var height = _ref$height === undefined ? 100 : _ref$height;
+    var _ref$layer = _ref.layer;
+    var layer = _ref$layer === undefined ? 0 : _ref$layer;
+    var _ref$scaleX = _ref.scaleX;
+    var scaleX = _ref$scaleX === undefined ? 1 : _ref$scaleX;
+    var _ref$scaleY = _ref.scaleY;
+    var scaleY = _ref$scaleY === undefined ? 1 : _ref$scaleY;
+    var _ref$angle = _ref.angle;
+    var angle = _ref$angle === undefined ? 0 : _ref$angle;
+    var _ref$background = _ref.background;
+    var background = _ref$background === undefined ? '#DDDDDD' : _ref$background;
+    var canvas = _ref.canvas;
+
+    _classCallCheck(this, FGroupMember);
+
+    _get(Object.getPrototypeOf(FGroupMember.prototype), 'constructor', this).call(this, { x: x, y: y, width: width, height: height, layer: layer, scaleX: scaleX, scaleY: scaleY, angle: angle, background: background, canvas: canvas });
+
+    this._mask = undefined;
+    this._selection = undefined;
+    this._controls = new Set();
+  }
+
+  _createClass(FGroupMember, [{
+    key: 'getControls',
+    value: function getControls() {
+      return this._controls;
+    }
+  }]);
+
+  return FGroupMember;
+})(_FObject3['default']);
+
+exports['default'] = FGroupMember;
+module.exports = exports['default'];
+
+},{"./FGroup":1,"./FObject":3}],3:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
+
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+function _toArray(arr) { return Array.isArray(arr) ? arr : Array.from(arr); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
@@ -85,78 +346,98 @@ var FObject = (function () {
   }
 
   _createClass(FObject, [{
+    key: 'test',
+    value: function test() {
+      var _ref2 = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
+
+      var _ref22 = _toArray(_ref2);
+
+      var objs = _ref22;
+
+      console.log(objs);
+    }
+  }, {
     key: 'setPosition',
     value: function setPosition() {
-      var _ref2 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+      var _ref3 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-      var _ref2$x = _ref2.x;
-      var x = _ref2$x === undefined ? this._position.x : _ref2$x;
-      var _ref2$y = _ref2.y;
-      var y = _ref2$y === undefined ? this._position.y : _ref2$y;
+      var _ref3$x = _ref3.x;
+      var x = _ref3$x === undefined ? this._position.x : _ref3$x;
+      var _ref3$y = _ref3.y;
+      var y = _ref3$y === undefined ? this._position.y : _ref3$y;
 
-      if (x !== this._position.x || y !== this._position.y) {
-        this._dirty = true;
-      }
+      if (x === this._position.x && y === this._position.y) return;
 
       this._position.x = x;
       this._position.y = y;
+
+      this._dirty = true;
+      this._calculateCenter();
     }
   }, {
     key: 'setDimensions',
     value: function setDimensions() {
-      var _ref3 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+      var _ref4 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-      var _ref3$width = _ref3.width;
-      var width = _ref3$width === undefined ? this._width : _ref3$width;
-      var _ref3$height = _ref3.height;
-      var height = _ref3$height === undefined ? this._height : _ref3$height;
+      var _ref4$width = _ref4.width;
+      var width = _ref4$width === undefined ? this._width : _ref4$width;
+      var _ref4$height = _ref4.height;
+      var height = _ref4$height === undefined ? this._height : _ref4$height;
 
-      if (width !== this._width || height !== this._height) {
-        this._dirty = true;
-        this._calculateCenter();
-      }
+      if (width === this._width && height === this._height) return;
 
       this._width = width;
       this._height = height;
+
+      this._c.width = width;
+      this._c.height = height;
+
+      this._dirty = true;
+      this._calculateCenter();
     }
   }, {
     key: 'setBackground',
     value: function setBackground() {
       var background = arguments.length <= 0 || arguments[0] === undefined ? this._background : arguments[0];
 
-      if (background !== this._background) {
-        this._dirty = true;
-      }
+      if (background === this._background) return;
 
+      this._dirty = true;
       this._background = background;
     }
   }, {
     key: '_calculateCenter',
     value: function _calculateCenter() {
-      var centerX = this._position.x + this._width / 2;
-      var centerY = this._position.y + this._height / 2;
-
-      return { x: centerX, y: centerY };
+      this._center = {
+        x: this._position.x + this._width / 2,
+        y: this._position.y + this._height / 2
+      };
+    }
+  }, {
+    key: 'getScene',
+    value: function getScene() {
+      return this._scene;
+    }
+  }, {
+    key: 'getID',
+    value: function getID() {
+      return this._id;
     }
   }, {
     key: 'setScene',
     value: function setScene(scene) {
-      if (!this._scene) {
-        this._scene = scene;
-        return true;
-      }
+      if (this._scene) return false;
 
-      return false;
+      this._scene = scene;
+      return true;
     }
   }, {
     key: 'setID',
     value: function setID(id) {
-      if (!this._id) {
-        this._id = id;
-        return true;
-      }
+      if (this._id) return false;
 
-      return false;
+      this._id = id;
+      return true;
     }
   }, {
     key: 'draw',
@@ -187,12 +468,38 @@ var FObject = (function () {
   }, {
     key: 'hitTest',
     value: function hitTest() {
-      var _ref4 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+      var _ref5 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-      var x = _ref4.x;
-      var y = _ref4.y;
-      var width = _ref4.width;
-      var height = _ref4.height;
+      var x = _ref5.x;
+      var y = _ref5.y;
+      var width = _ref5.width;
+      var height = _ref5.height;
+
+      if (!x || !y) return false;
+
+      // If we're testing for a single point.
+      if (!width || !height) {
+        if (x >= this._position.x && x <= this._position.x + this._width && y <= this._position.y + this._height && y >= this._position.y) {
+          return true;
+        }
+        // If we're testing for a rectangle.
+      } else {
+          if (x <= this._position.x && x + width >= this._position.x) {
+            if (y <= this._position.y && y + height >= this._position.y) {
+              return true;
+            } else if (y <= this._position.y + this._height && y + height >= this._position.y + this._height) {
+              return true;
+            }
+          } else if (x <= this._position.x + this._width && x + width >= this._position.x + this._width) {
+            if (y <= this._position.y && y + height >= this._position.y) {
+              return true;
+            } else if (y <= this._position.y + this._height && y + height >= this._position.y + this._height) {
+              return true;
+            }
+          }
+        }
+
+      return false;
     }
   }]);
 
@@ -202,7 +509,7 @@ var FObject = (function () {
 exports['default'] = FObject;
 module.exports = exports['default'];
 
-},{}],2:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -294,6 +601,9 @@ var FScene = (function (_FObject) {
   }
 
   _createClass(FScene, [{
+    key: 'add',
+    value: function add(objs) {}
+  }, {
     key: '_onMouseDown',
     value: function _onMouseDown(e) {
       var _getMouseCoords2 = this._getMouseCoords(e);
@@ -399,7 +709,7 @@ var FScene = (function (_FObject) {
 exports['default'] = FScene;
 module.exports = exports['default'];
 
-},{"./FObject":1}],3:[function(require,module,exports){
+},{"./FObject":3}],5:[function(require,module,exports){
 'use strict';
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
@@ -408,6 +718,14 @@ var _FObject = require('./FObject');
 
 var _FObject2 = _interopRequireDefault(_FObject);
 
+var _FGroup = require('./FGroup');
+
+var _FGroup2 = _interopRequireDefault(_FGroup);
+
+var _FGroupMember = require('./FGroupMember');
+
+var _FGroupMember2 = _interopRequireDefault(_FGroupMember);
+
 var _FScene = require('./FScene');
 
 var _FScene2 = _interopRequireDefault(_FScene);
@@ -415,6 +733,8 @@ var _FScene2 = _interopRequireDefault(_FScene);
 window.FL = {};
 
 window.FL.FObject = _FObject2['default'];
+window.FL.FGroup = _FGroup2['default'];
+window.FL.FGroupMember = _FGroupMember2['default'];
 window.FL.FScene = _FScene2['default'];
 
-},{"./FObject":1,"./FScene":2}]},{},[3]);
+},{"./FGroup":1,"./FGroupMember":2,"./FObject":3,"./FScene":4}]},{},[5]);

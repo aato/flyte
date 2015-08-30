@@ -1,19 +1,15 @@
-import FObject from './FObject';
+import FGroup from './FGroup';
 
-export default class FScene extends FObject{
+export default class FScene extends FGroup{
   constructor({canvas, width = 600, height = 300} = {}){
-    if(!canvas){
-      var e = new Error('Flyte.FScene#constructor: Scene must be supplied a canvas.');
-      e.code = "E_CANVAS_UNDEFINED";
-      throw e;
-    }
-
     super({canvas, width, height});
 
-    this._prevMouseLeft = 0;
-    this._prevMouseTop = 0;
+    this._prevMouseX = 0;
+    this._prevMouseY = 0;
 
-    this._c.tabIndex = 1000;
+    // Allows us to listen for keydown/up event
+    this._c.tabIndex = 9999;
+    // Prevents canvas from being outlined.
     this._c.style.outline = "none";
 
     this._nextID = (
@@ -59,48 +55,117 @@ export default class FScene extends FObject{
     this._requestID = this._request(this.__tick);
   }
 
-  _onMouseDown(e){
-    var {left, top} = this._getMouseCoords(e);
+  add(objs){
+    if(!Array.isArray(objs)){
+      objs = [objs];
+    }
 
-    this._prevMouseLeft = left;
-    this._prevMouseTop = top;
+    var toAdd = [];
+
+    for(let obj of objs){
+      // If it already belongs to a scene, ignore it.
+      if(obj.getScene() && obj.getID()) continue;
+
+      toAdd.push(obj);
+    }
+
+    var addedObjs = this.super.add(toAdd);
+    for(let obj of addedObjs){
+      // Assign the object a unique ID within the scene.
+      obj.setID(this._nextID());
+      // Assign this scene to the object.
+      obj.setScene(this)
+    }
+
+    return addedObjs;
+  }
+
+  remove(objs){
+    if(!Array.isArray(objs)){
+      objs = [objs];
+    }
+
+    var removedObjs = this.super.remove(objs);
+    for(let obj of removedObjs){
+      // Remove this object's ID.
+      obj.setID(undefined);
+      // Remove this scene from this object.
+      obj.setScene(undefined)
+    }
+
+    return removedObjs;
+  }
+
+  clear(){
+    var removedObjs = this.super.clear();
+    for(let obj of removedObjs){
+      // Remove this object's ID.
+      obj.setID(undefined);
+      // Remove this scene from this object.
+      obj.setScene(undefined)
+    }
+
+    return removedObjs;
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  _onMouseDown(e){
+    var {x, y} = this._getMouseCoords(e);
+
+    this._prevMouseX = x;
+    this._prevMouseY = y;
   }
 
   _onMouseUp(e){
-    var {left, top} = this._getMouseCoords(e);
+    var {x, y} = this._getMouseCoords(e);
 
-    this._prevMouseLeft = left;
-    this._prevMouseTop = top;
+    this._prevMouseX = x;
+    this._prevMouseY = y;
   }
 
   _onClick(e){
-    var {left, top} = this._getMouseCoords(e);
+    var {x, y} = this._getMouseCoords(e);
 
-    console.log(this.hitTest({left, top}));
+    console.log(this.hitTest({x, y}));
 
-    this._prevMouseLeft = left;
-    this._prevMouseTop = top;
+    this._prevMouseX = x;
+    this._prevMouseY = y;
   }
 
   _onDoubleClick(e){
-    var {left, top} = this._getMouseCoords(e);
+    var {x, y} = this._getMouseCoords(e);
 
-    this._prevMouseLeft = left;
-    this._prevMouseTop = top;
+    this._prevMouseX = x;
+    this._prevMouseY = y;
   }
 
   _onMouseMove(e){
-    var {left, top} = this._getMouseCoords(e);
+    var {x, y} = this._getMouseCoords(e);
 
-    this._prevMouseLeft = left;
-    this._prevMouseTop = top;
+    this._prevMouseX = x;
+    this._prevMouseY = y;
   }
 
   _onMouseOut(e){
-    var {left, top} = this._getMouseCoords(e);
+    var {x, y} = this._getMouseCoords(e);
 
-    this._prevMouseLeft = left;
-    this._prevMouseTop = top;
+    this._prevMouseX = x;
+    this._prevMouseY = y;
   }
 
   _onKeyDown(e){
@@ -123,9 +188,9 @@ export default class FScene extends FObject{
 
   _getMouseCoords(e){
     var rect = this._c.getBoundingClientRect();
-    var left = e.clientX - rect.left;
-    var top = e.clientY - rect.top;
+    var x = e.clientX - rect.left;
+    var y = e.clientY - rect.top;
 
-    return {left, top};
+    return {x, y};
   }
 }

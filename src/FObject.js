@@ -1,9 +1,9 @@
 export default class FObject{
-  constructor({x = 0, y = 0, width = 100, height = 100, layer = 0, scaleX = 1, scaleY = 1, angle = 0, background = '#DDDDDD', canvas} = {}){
+  constructor({x = 0, y = 0, width = 100, height = 100, scaleX = 1, scaleY = 1, angle = 0, background = '#DDDDDD', canvas} = {}){
     this._id          = undefined;
     this._scene       = undefined;
 
-    this._position    = {x: x, y: y, layer: layer};
+    this._position    = {x: x, y: y};
     this._rotation    = angle;
     this._scale       = {x: scaleX, y: scaleY};
 
@@ -60,18 +60,20 @@ export default class FObject{
     };
   }
 
-  setScene(scene){
-    if(this._scene) return false;
+  getScene(){
+    return this._scene;
+  }
 
+  getID(){
+    return this._id;
+  }
+
+  setScene(scene){
     this._scene = scene;
-    return true;
   }
 
   setID(id){
-    if(this._id) return false;
-
     this._id = id;
-    return true;
   }
 
   draw(ctx){
