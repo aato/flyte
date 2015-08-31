@@ -86,4 +86,8 @@ export default class FGroup extends FObject {
 
     return true;
   }
+
+  getChildren(){
+    return this._children;
+  }
 }

@@ -238,6 +238,11 @@ var FGroup = (function (_FObject) {
 
       return true;
     }
+  }, {
+    key: 'getChildren',
+    value: function getChildren() {
+      return this._children;
+    }
   }]);
 
   return FGroup;
@@ -267,9 +272,9 @@ var _FObject2 = require('./FObject');
 
 var _FObject3 = _interopRequireDefault(_FObject2);
 
-var _FGroup = require('./FGroup');
+var _FSelection = require('./FSelection');
 
-var _FGroup2 = _interopRequireDefault(_FGroup);
+var _FSelection2 = _interopRequireDefault(_FSelection);
 
 var FGroupMember = (function (_FObject) {
   _inherits(FGroupMember, _FObject);
@@ -308,7 +313,7 @@ var FGroupMember = (function (_FObject) {
   _createClass(FGroupMember, [{
     key: 'setSelector',
     value: function setSelector(selector) {
-      if (!(selector instanceof FSelection)) return false;
+      if (!(selector instanceof _FSelection2['default'])) return false;
 
       this._selector = selector;
       return true;
@@ -321,7 +326,7 @@ var FGroupMember = (function (_FObject) {
 exports['default'] = FGroupMember;
 module.exports = exports['default'];
 
-},{"./FGroup":1,"./FObject":3}],3:[function(require,module,exports){
+},{"./FObject":3,"./FSelection":5}],3:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -409,7 +414,7 @@ var FObject = (function () {
       var topLeft = { px: this._position.x, py: this._position.y };
       var topRight = { px: this._position.x + this._width, py: this._position.y };
       var bottomRight = { px: this._position.x + this._width, py: this._position.y + this._height };
-      var bottomLeft = { px: this._position.x, py: this._position.y + this.height };
+      var bottomLeft = { px: this._position.x, py: this._position.y + this._height };
 
       var theta = this._rotation * (Math.PI / 180);
       var ox = this._center.x;
@@ -519,7 +524,6 @@ var FObject = (function () {
       }
 
       ctx.save();
-      // console.log(this._center);
       ctx.translate(this._center.x, this._center.y);
       ctx.scale(this._scale.x, this._scale.y);
       ctx.rotate(this._rotation * Math.PI / 180);
@@ -530,7 +534,7 @@ var FObject = (function () {
   }, {
     key: '_render',
     value: function _render() {
-      console.log('BOX RENDER');
+      console.log('OBJECT RENDER');
       this._ctx.save();
       this._ctx.clearRect(0, 0, this._width, this._height);
       this._ctx.fillStyle = this._background;
@@ -627,8 +631,6 @@ var FScene = (function (_FGroup) {
     this._prevMouseX = 0;
     this._prevMouseY = 0;
 
-    this._selection = new _FSelection2['default']();
-
     // Allows us to listen for keydown/up event
     this._c.tabIndex = 9999;
     // Prevents canvas from being outlined.
@@ -644,6 +646,10 @@ var FScene = (function (_FGroup) {
 
     this._id = this._nextID();
     this._scene = this;
+
+    this._selection = new _FSelection2['default']();
+    this._selection.setID(this._nextID());
+    this._selection.setScene(this);
 
     var __onMouseDown = this._onMouseDown.bind(this);
     this._c.onmousedown = __onMouseDown;
@@ -959,8 +965,6 @@ var FScene = (function (_FGroup) {
 
           child.draw(this._ctx);
         }
-
-        // Update this object's canvas here.
       } catch (err) {
         _didIteratorError5 = true;
         _iteratorError5 = err;
@@ -976,6 +980,11 @@ var FScene = (function (_FGroup) {
         }
       }
 
+      if (this._selection.getChildren().size > 0) {
+        this._selection.draw(this._ctx);
+      }
+
+      // Update this object's canvas here.
       this._ctx.restore();
     }
   }, {
@@ -1024,22 +1033,63 @@ var FSelection = (function (_FGroup) {
 
     var x = _ref.x;
     var y = _ref.y;
-    var width = _ref.width;
-    var height = _ref.height;
+    var _ref$width = _ref.width;
+    var width = _ref$width === undefined ? 0 : _ref$width;
+    var _ref$height = _ref.height;
+    var height = _ref$height === undefined ? 0 : _ref$height;
     var layer = _ref.layer;
     var scaleX = _ref.scaleX;
     var scaleY = _ref.scaleY;
     var angle = _ref.angle;
     var background = _ref.background;
     var canvas = _ref.canvas;
-    var children = _ref.children;
+    var _ref$outlineStyle = _ref.outlineStyle;
+    var outlineStyle = _ref$outlineStyle === undefined ? '#2222BB' : _ref$outlineStyle;
+    var _ref$outlineWidth = _ref.outlineWidth;
+    var outlineWidth = _ref$outlineWidth === undefined ? 5 : _ref$outlineWidth;
+    var _ref$outlineDash = _ref.outlineDash;
+    var outlineDash = _ref$outlineDash === undefined ? [5, 15] : _ref$outlineDash;
+    var _ref$transparency = _ref.transparency;
+    var transparency = _ref$transparency === undefined ? 0.5 : _ref$transparency;
 
     _classCallCheck(this, FSelection);
 
     _get(Object.getPrototypeOf(FSelection.prototype), 'constructor', this).call(this, { x: x, y: y, width: width, height: height, layer: layer, scaleX: scaleX, scaleY: scaleY, angle: angle, background: background, canvas: canvas });
+
+    this._outlineStyle = outlineStyle;
+    this._outlineWidth = outlineWidth;
+    this._outlineDash = outlineDash;
+    this._transparency = transparency;
+
+    this._ctx.globalAlpha = this._transparency;
   }
 
   _createClass(FSelection, [{
+    key: 'draw',
+    value: function draw(ctx) {
+      _get(Object.getPrototypeOf(FSelection.prototype), 'draw', this).call(this, ctx);
+
+      ctx.save();
+
+      ctx.translate(this._center.x, this._center.y);
+      ctx.scale(this._scale.x, this._scale.y);
+      ctx.rotate(this._rotation * Math.PI / 180);
+
+      ctx.setLineDash(this._outlineDash);
+      ctx.lineWidth = this._outlineWidth;
+      ctx.strokeStyle = this._outlineStyle;
+
+      ctx.beginPath();
+      ctx.moveTo(-this._width / 2, -this._height / 2);
+      ctx.lineTo(-this._width / 2 + this._width, -this._height / 2);
+      ctx.lineTo(-this._width / 2 + this._width, -this._height / 2 + this._height);
+      ctx.lineTo(-this._width / 2, -this._height / 2 + this._height);
+      ctx.lineTo(-this._width / 2, -this._height / 2);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+  }, {
     key: '_updatePositionAndDimensions',
     value: function _updatePositionAndDimensions() {
       var leftMost = undefined;
@@ -1064,10 +1114,10 @@ var FSelection = (function (_FGroup) {
             for (var _iterator2 = childWorldBB[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
               var point = _step2.value;
 
-              if (!leftMost) leftMost = point.x;
-              if (!rightMost) rightMost = point.x;
-              if (!bottomMost) bottomMost = point.y;
-              if (!topMost) topMost = point.y;
+              if (leftMost === undefined) leftMost = point.x;
+              if (rightMost === undefined) rightMost = point.x;
+              if (bottomMost === undefined) bottomMost = point.y;
+              if (topMost === undefined) topMost = point.y;
 
               leftMost = point.x < leftMost ? point.x : leftMost;
               rightMost = point.x > rightMost ? point.x : rightMost;
@@ -1106,8 +1156,10 @@ var FSelection = (function (_FGroup) {
 
       this._position.x = leftMost || this._position.x;
       this._position.y = topMost || this._position.y;
-      this._width = leftMost && rightMost ? rightMost - leftMost : 0;
-      this._height = bottomMost && topMost ? bottomMost - topMost : 0;
+      this._width = leftMost !== undefined && rightMost !== undefined ? rightMost - leftMost : 0;
+      this._height = bottomMost !== undefined && topMost !== undefined ? bottomMost - topMost : 0;
+
+      console.log(this._position.x, this._position.y, this._width, this._height);
 
       this._calculateCenter();
     }
@@ -1261,25 +1313,25 @@ module.exports = exports['default'];
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-var _FObject = require('./FObject');
+var _FSelection = require('./FSelection');
 
-var _FObject2 = _interopRequireDefault(_FObject);
-
-var _FGroup = require('./FGroup');
-
-var _FGroup2 = _interopRequireDefault(_FGroup);
+var _FSelection2 = _interopRequireDefault(_FSelection);
 
 var _FScene = require('./FScene');
 
 var _FScene2 = _interopRequireDefault(_FScene);
 
-var _FSelection = require('./FSelection');
-
-var _FSelection2 = _interopRequireDefault(_FSelection);
-
 var _FGroupMember = require('./FGroupMember');
 
 var _FGroupMember2 = _interopRequireDefault(_FGroupMember);
+
+var _FGroup = require('./FGroup');
+
+var _FGroup2 = _interopRequireDefault(_FGroup);
+
+var _FObject = require('./FObject');
+
+var _FObject2 = _interopRequireDefault(_FObject);
 
 window.FL = {};
 

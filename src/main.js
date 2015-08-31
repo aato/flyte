@@ -1,8 +1,8 @@
-import FObject from './FObject';
-import FGroup from './FGroup';
-import FScene from './FScene';
 import FSelection from './FSelection';
+import FScene from './FScene';
 import FGroupMember from './FGroupMember';
+import FGroup from './FGroup';
+import FObject from './FObject';
 
 window.FL = {};
 

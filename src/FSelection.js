@@ -1,8 +1,39 @@
 import FGroup from './FGroup';
 
 export default class FSelection extends FGroup{
-  constructor({x, y, width, height, layer, scaleX, scaleY, angle, background, canvas, children} = {}){
+  constructor({x, y, width = 0, height = 0, layer, scaleX, scaleY, angle, background, canvas, outlineStyle = '#2222BB', outlineWidth = 5, outlineDash = [5, 15], transparency = 0.5} = {}){
     super({x, y, width, height, layer, scaleX, scaleY, angle, background, canvas});
+
+    this._outlineStyle    = outlineStyle;
+    this._outlineWidth    = outlineWidth;
+    this._outlineDash     = outlineDash;
+    this._transparency    = transparency;
+
+    this._ctx.globalAlpha = this._transparency;
+  }
+
+  draw(ctx){
+    super.draw(ctx);
+
+    ctx.save();
+
+      ctx.translate(this._center.x, this._center.y);
+      ctx.scale(this._scale.x, this._scale.y);
+      ctx.rotate(this._rotation * Math.PI/180);
+
+      ctx.setLineDash(this._outlineDash);
+      ctx.lineWidth = this._outlineWidth;
+      ctx.strokeStyle = this._outlineStyle;
+
+      ctx.beginPath();
+      ctx.moveTo(-this._width / 2, -this._height / 2);
+      ctx.lineTo(-this._width / 2 + this._width, -this._height / 2);
+      ctx.lineTo(-this._width / 2 + this._width, -this._height / 2 + this._height);
+      ctx.lineTo(-this._width / 2, -this._height / 2 + this._height);
+      ctx.lineTo(-this._width / 2, -this._height / 2);
+      ctx.stroke();
+
+    ctx.restore();
   }
 
   _updatePositionAndDimensions(){
@@ -14,10 +45,10 @@ export default class FSelection extends FGroup{
     for(let child of this){
       let childWorldBB = child.getWorldBoundingBox();
       for(let point of childWorldBB){
-        if(!leftMost) leftMost = point.x;
-        if(!rightMost) rightMost = point.x;
-        if(!bottomMost) bottomMost = point.y;
-        if(!topMost) topMost = point.y;
+        if(leftMost === undefined) leftMost = point.x;
+        if(rightMost === undefined) rightMost = point.x;
+        if(bottomMost === undefined) bottomMost = point.y;
+        if(topMost === undefined) topMost = point.y;
 
         leftMost = point.x < leftMost ? point.x : leftMost;
         rightMost = point.x > rightMost ? point.x : rightMost;
@@ -28,8 +59,8 @@ export default class FSelection extends FGroup{
 
     this._position.x = leftMost || this._position.x;
     this._position.y = topMost || this._position.y;
-    this._width =  leftMost && rightMost ? (rightMost - leftMost) : 0;
-    this._height = bottomMost && topMost ? (bottomMost - topMost) : 0;
+    this._width =  leftMost !== undefined && rightMost !== undefined ? (rightMost - leftMost) : 0;
+    this._height = bottomMost !== undefined && topMost !== undefined ? (bottomMost - topMost) : 0;
 
     this._calculateCenter();
   }

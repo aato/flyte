@@ -44,7 +44,7 @@ export default class FObject{
     var topLeft = {px : this._position.x, py : this._position.y};
     var topRight = {px : this._position.x + this._width, py : this._position.y};
     var bottomRight = {px : this._position.x + this._width, py : this._position.y + this._height};
-    var bottomLeft = {px : this._position.x, py : this._position.y + this.height};
+    var bottomLeft = {px : this._position.x, py : this._position.y + this._height};
 
     var theta = this._rotation * (Math.PI / 180);
     var ox = this._center.x;
@@ -124,7 +124,6 @@ export default class FObject{
     }
 
     ctx.save();
-      // console.log(this._center);
       ctx.translate(this._center.x, this._center.y);
       ctx.scale(this._scale.x, this._scale.y);
       ctx.rotate(this._rotation * Math.PI/180);
@@ -134,7 +133,7 @@ export default class FObject{
   }
 
   _render(){
-    console.log('BOX RENDER');
+    console.log('OBJECT RENDER');
     this._ctx.save();
       this._ctx.clearRect(0, 0, this._width, this._height);
       this._ctx.fillStyle = this._background;
