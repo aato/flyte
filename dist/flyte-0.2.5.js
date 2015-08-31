@@ -1013,7 +1013,7 @@ Object.defineProperty(exports, '__esModule', {
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-var _get = function get(_x2, _x3, _x4) { var _again = true; _function: while (_again) { var object = _x2, property = _x3, receiver = _x4; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x2 = parent; _x3 = property; _x4 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+var _get = function get(_x3, _x4, _x5) { var _again = true; _function: while (_again) { var object = _x3, property = _x4, receiver = _x5; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x3 = parent; _x4 = property; _x5 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
@@ -1154,14 +1154,29 @@ var FSelection = (function (_FGroup) {
         }
       }
 
-      this._position.x = leftMost || this._position.x;
-      this._position.y = topMost || this._position.y;
-      this._width = leftMost !== undefined && rightMost !== undefined ? rightMost - leftMost : 0;
-      this._height = bottomMost !== undefined && topMost !== undefined ? bottomMost - topMost : 0;
+      var newX = leftMost || this._position.x;
+      var newY = topMost || this._position.y;
+      var newWidth = leftMost !== undefined && rightMost !== undefined ? rightMost - leftMost : 0;
+      var newHeight = bottomMost !== undefined && topMost !== undefined ? bottomMost - topMost : 0;
 
-      console.log(this._position.x, this._position.y, this._width, this._height);
+      this.setPosition({ x: newX, y: newY });
+      this.setDimensions({ width: newWidth, height: newHeight });
 
       this._calculateCenter();
+    }
+  }, {
+    key: 'setDimensions',
+    value: function setDimensions() {
+      var _ref2 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+      var _ref2$width = _ref2.width;
+      var width = _ref2$width === undefined ? this._width : _ref2$width;
+      var _ref2$height = _ref2.height;
+      var height = _ref2$height === undefined ? this._height : _ref2$height;
+
+      _get(Object.getPrototypeOf(FSelection.prototype), 'setDimensions', this).call(this, { width: width, height: height });
+
+      this._ctx.globalAlpha = this._transparency;
     }
   }, {
     key: 'add',

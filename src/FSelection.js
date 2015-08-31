@@ -57,12 +57,21 @@ export default class FSelection extends FGroup{
       }
     }
 
-    this._position.x = leftMost || this._position.x;
-    this._position.y = topMost || this._position.y;
-    this._width =  leftMost !== undefined && rightMost !== undefined ? (rightMost - leftMost) : 0;
-    this._height = bottomMost !== undefined && topMost !== undefined ? (bottomMost - topMost) : 0;
+    var newX = leftMost || this._position.x;
+    var newY = topMost || this._position.y;
+    var newWidth = leftMost !== undefined && rightMost !== undefined ? (rightMost - leftMost) : 0;
+    var newHeight = bottomMost !== undefined && topMost !== undefined ? (bottomMost - topMost) : 0;
+
+    this.setPosition({x: newX, y: newY});
+    this.setDimensions({width: newWidth, height: newHeight});
 
     this._calculateCenter();
+  }
+
+  setDimensions({width = this._width, height = this._height} = {}){
+    super.setDimensions({width, height});
+
+    this._ctx.globalAlpha = this._transparency;
   }
 
   add(objs){
