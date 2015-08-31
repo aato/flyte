@@ -8,8 +8,6 @@ export default class FScene extends FGroup{
     this._prevMouseX = 0;
     this._prevMouseY = 0;
 
-    this._selection = new FSelection();
-
     // Allows us to listen for keydown/up event
     this._c.tabIndex = 9999;
     // Prevents canvas from being outlined.
@@ -26,6 +24,10 @@ export default class FScene extends FGroup{
 
     this._id = this._nextID();
     this._scene = this;
+
+    this._selection = new FSelection();
+    this._selection.setID(this._nextID());
+    this._selection.setScene(this);
 
     var __onMouseDown = this._onMouseDown.bind(this);
     this._c.onmousedown = __onMouseDown;
@@ -226,6 +228,10 @@ export default class FScene extends FGroup{
 
       for(let child of this._drawOrder){
         child.draw(this._ctx);
+      }
+
+      if(this._selection.getChildren().size > 0){
+        this._selection.draw(this._ctx);
       }
 
       // Update this object's canvas here.

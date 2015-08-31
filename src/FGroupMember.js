@@ -1,5 +1,5 @@
 import FObject from './FObject';
-import FGroup from './FGroup';
+import FSelection from './FSelection';
 
 export default class FGroupMember extends FObject {
   constructor({x = 0, y = 0, width = 100, height = 100, layer = 0, scaleX = 1, scaleY = 1, angle = 0, background = '#DDDDDD', canvas} = {}){
