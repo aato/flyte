@@ -61,7 +61,7 @@ export default class FObject{
   }
 
   setPosition({x = this._position.x, y = this._position.y, layer = this._position.layer} = {}){
-    if(x === this._position.x && y === this._position.y && layer === this._position.layer) return;
+    if(x === this._position.x && y === this._position.y && layer === this._position.layer) return false;
 
     this._position.x = x;
     this._position.y = y;
@@ -70,10 +70,16 @@ export default class FObject{
     this._calculateCenter();
 
     if(this._scene) this._scene.setFlag('canvasDirty', true);
+
+    return true;
+  }
+
+  getPosition(){
+    return this._position;
   }
 
   setDimensions({width = this._width, height = this._height} = {}){
-    if(width === this._width && height === this._height) return;
+    if(width === this._width && height === this._height) return false;
 
     this._width = width;
     this._height = height;
@@ -84,6 +90,12 @@ export default class FObject{
     this._calculateCenter();
     this.setFlag('canvasDirty', true);
     if(this._scene) this._scene.setFlag('canvasDirty', true);
+
+    return true;
+  }
+
+  getDimensions(){
+    return {width: this._width, height: this._height};
   }
 
   setBackground(background = this._background){
@@ -92,6 +104,10 @@ export default class FObject{
     this._background = background;
     this.setFlag('canvasDirty', true);
     if(this._scene) this._scene.setFlag('canvasDirty', true);
+  }
+
+  getBackground(){
+    return this._background;
   }
 
   _calculateCenter(){

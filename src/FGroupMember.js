@@ -10,9 +10,18 @@ export default class FGroupMember extends FObject {
   }
 
   setSelector(selector){
-    if(!(selector instanceof FSelection)) return false;
-
     this._selector = selector;
-    return true;
+  }
+
+  setPosition({x = this._position.x, y = this._position.y, layer = this._position.layer} = {}, calledBySelector = false){
+    if(this._selector && !calledBySelector) return false;
+
+    return super.setPosition({x, y, layer});
+  }
+
+  setDimensions({width = this._width, height = this._height} = {}, calledBySelector = false){
+    if(this._selector && !calledBySelector) return false;
+
+    return super.setDimensions({width, height});
   }
 }

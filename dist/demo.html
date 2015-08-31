@@ -19,9 +19,11 @@
 
       var scene = new FL.FScene({canvas: c});
       var o = new FL.FGroupMember({background: 'red'});
+      var o2 = new FL.FGroupMember({background: 'green', x: 300, y: 200});
       // o._rotation = 33;
       scene.add(o);
-      console.log(scene.select(o));
+      scene.add(o2);
+      console.log(scene.select([o, o2]));
 
       // o.setPosition({x: 200, y: 50});
       // o.setDimensions({height: 200})

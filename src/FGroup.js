@@ -18,6 +18,10 @@ export default class FGroup extends FObject {
     }
   }
 
+  getSize(){
+    return this._children.size;
+  }
+
   add(objs){
     if(!Array.isArray(objs)){
       objs = [objs];
@@ -33,6 +37,7 @@ export default class FGroup extends FObject {
     for(let obj of objs){
       // If it doesn't derive from FGroupMember, ignore it.
       if(!(obj instanceof FGroupMember)) continue;
+      if(this._children.has(obj)) continue;
 
       this._children.add(obj);
       addedObjs.push(obj);
