@@ -1,15 +1,27 @@
 import FGroup from './FGroup';
 
 export default class FSelection extends FGroup{
-  constructor({x, y, width = 0, height = 0, layer, scaleX, scaleY, angle, background, canvas, outlineStyle = '#2222BB', outlineWidth = 5, outlineDash = [5, 15], transparency = 0.5} = {}){
-    super({x, y, width, height, layer, scaleX, scaleY, angle, background, canvas});
+  constructor({x, y, width = 0, height = 0, scaleX, scaleY, angle, background, canvas, outlineStyle = '#2222BB', outlineWidth = 5, outlineDash = [5, 15], transparency = 0} = {}){
+    super({x, y, width, height, layer: 9998, scaleX, scaleY, angle, background, canvas});
+    if(!x) this._position.x = undefined;
+    if(!y) this._position.y = undefined;
 
     this._outlineStyle    = outlineStyle;
     this._outlineWidth    = outlineWidth;
     this._outlineDash     = outlineDash;
     this._transparency    = transparency;
 
+    this._dragged         = false;
+
     this._ctx.globalAlpha = this._transparency;
+  }
+
+  setDragged(dragged){
+    this._dragged = dragged;
+  }
+
+  getDragged(){
+    return this._dragged;
   }
 
   draw(ctx){
@@ -36,6 +48,18 @@ export default class FSelection extends FGroup{
     ctx.restore();
   }
 
+  getOutlineDash(){
+    return this._outlineDash;
+  }
+
+  getOutlineWidth(){
+    return this._outlineWidth;
+  }
+
+  getOutlineStyle(){
+    return this._outlineStyle;
+  }
+
   _updatePositionAndDimensions(){
     var leftMost = undefined;
     var rightMost = undefined;
@@ -57,8 +81,8 @@ export default class FSelection extends FGroup{
       }
     }
 
-    var newX = leftMost || this._position.x;
-    var newY = topMost || this._position.y;
+    var newX = leftMost !== undefined ? leftMost : this._position.x;
+    var newY = topMost !== undefined ? topMost : this._position.y;
     var newWidth = leftMost !== undefined && rightMost !== undefined ? (rightMost - leftMost) : 0;
     var newHeight = bottomMost !== undefined && topMost !== undefined ? (bottomMost - topMost) : 0;
 
@@ -68,10 +92,35 @@ export default class FSelection extends FGroup{
     this._calculateCenter();
   }
 
+  setPosition({x = this._position.x, y = this._position.y, layer = this._position.layer} = {}){
+    var originalX = this._position.x !== undefined ? this._position.x : x;
+    var originalY = this._position.y !== undefined ? this._position.y : y;
+
+    var selectionPosChanged = super.setPosition({x, y, layer});
+    if(!selectionPosChanged) return false;
+
+    var dx = this._position.x - originalX;
+    var dy = this._position.y - originalY;
+
+    for(let child of this){
+      let childPosition = child.getPosition();
+      let childX = childPosition.x;
+      let childY = childPosition.y;
+
+      child.setPosition({x: childX + dx, y: childY + dy}, true);
+    }
+
+    return true;
+  }
+
   setDimensions({width = this._width, height = this._height} = {}){
-    super.setDimensions({width, height});
+    var selectionDimChanged = super.setDimensions({width, height});
+    if(!selectionDimChanged) return false;
 
     this._ctx.globalAlpha = this._transparency;
+
+    // TODO: Scale all children, figure it out...
+    return true;
   }
 
   add(objs){
@@ -89,10 +138,13 @@ export default class FSelection extends FGroup{
     }
 
     var addedObjs = super.add(toAdd);
+
     for(let obj of addedObjs){
       obj.setSelector(this);
     }
 
+    this._position.x = undefined;
+    this._position.y = undefined;
     this._updatePositionAndDimensions();
 
     return addedObjs;
@@ -108,6 +160,8 @@ export default class FSelection extends FGroup{
       obj.setSelector(undefined);
     }
 
+    this._position.x = undefined;
+    this._position.y = undefined;
     this._updatePositionAndDimensions();
 
     return removedObjs;
@@ -119,6 +173,8 @@ export default class FSelection extends FGroup{
       obj.setSelector(undefined);
     }
 
+    this._position.x = undefined;
+    this._position.y = undefined;
     this._updatePositionAndDimensions();
 
     return removedObjs;

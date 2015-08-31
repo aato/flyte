@@ -20,7 +20,7 @@ return function WeakMap(){return get(this,arguments[0])}},{get:function get(key)
  * flyte - Object model for the HTML5 canvas - a lightweight, faster alternative to fabric.js
  * @version v0.2.5
  * @license MIT
- * @date 2015-08-30
+ * @date 2015-08-31
  * @preserve
  * Copyright (c) Alex Alksne <alex.alksne@gmail.com> 2015 All Rights Reserved.
  */
@@ -104,6 +104,11 @@ var FGroup = (function (_FObject) {
       }, value, this);
     })
   }, {
+    key: 'getSize',
+    value: function getSize() {
+      return this._children.size;
+    }
+  }, {
     key: 'add',
     value: function add(objs) {
       if (!Array.isArray(objs)) {
@@ -126,6 +131,7 @@ var FGroup = (function (_FObject) {
 
           // If it doesn't derive from FGroupMember, ignore it.
           if (!(obj instanceof _FGroupMember2['default'])) continue;
+          if (this._children.has(obj)) continue;
 
           this._children.add(obj);
           addedObjs.push(obj);
@@ -260,7 +266,7 @@ Object.defineProperty(exports, '__esModule', {
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-var _get = function get(_x2, _x3, _x4) { var _again = true; _function: while (_again) { var object = _x2, property = _x3, receiver = _x4; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x2 = parent; _x3 = property; _x4 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+var _get = function get(_x6, _x7, _x8) { var _again = true; _function: while (_again) { var object = _x6, property = _x7, receiver = _x8; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x6 = parent; _x7 = property; _x8 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
@@ -313,10 +319,39 @@ var FGroupMember = (function (_FObject) {
   _createClass(FGroupMember, [{
     key: 'setSelector',
     value: function setSelector(selector) {
-      if (!(selector instanceof _FSelection2['default'])) return false;
-
       this._selector = selector;
-      return true;
+    }
+  }, {
+    key: 'setPosition',
+    value: function setPosition() {
+      var _ref2 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+      var _ref2$x = _ref2.x;
+      var x = _ref2$x === undefined ? this._position.x : _ref2$x;
+      var _ref2$y = _ref2.y;
+      var y = _ref2$y === undefined ? this._position.y : _ref2$y;
+      var _ref2$layer = _ref2.layer;
+      var layer = _ref2$layer === undefined ? this._position.layer : _ref2$layer;
+      var calledBySelector = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+
+      if (this._selector && !calledBySelector) return false;
+
+      return _get(Object.getPrototypeOf(FGroupMember.prototype), 'setPosition', this).call(this, { x: x, y: y, layer: layer });
+    }
+  }, {
+    key: 'setDimensions',
+    value: function setDimensions() {
+      var _ref3 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+      var _ref3$width = _ref3.width;
+      var width = _ref3$width === undefined ? this._width : _ref3$width;
+      var _ref3$height = _ref3.height;
+      var height = _ref3$height === undefined ? this._height : _ref3$height;
+      var calledBySelector = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+
+      if (this._selector && !calledBySelector) return false;
+
+      return _get(Object.getPrototypeOf(FGroupMember.prototype), 'setDimensions', this).call(this, { width: width, height: height });
     }
   }]);
 
@@ -444,7 +479,7 @@ var FObject = (function () {
       var _ref3$layer = _ref3.layer;
       var layer = _ref3$layer === undefined ? this._position.layer : _ref3$layer;
 
-      if (x === this._position.x && y === this._position.y && layer === this._position.layer) return;
+      if (x === this._position.x && y === this._position.y && layer === this._position.layer) return false;
 
       this._position.x = x;
       this._position.y = y;
@@ -453,6 +488,13 @@ var FObject = (function () {
       this._calculateCenter();
 
       if (this._scene) this._scene.setFlag('canvasDirty', true);
+
+      return true;
+    }
+  }, {
+    key: 'getPosition',
+    value: function getPosition() {
+      return this._position;
     }
   }, {
     key: 'setDimensions',
@@ -464,7 +506,7 @@ var FObject = (function () {
       var _ref4$height = _ref4.height;
       var height = _ref4$height === undefined ? this._height : _ref4$height;
 
-      if (width === this._width && height === this._height) return;
+      if (width === this._width && height === this._height) return false;
 
       this._width = width;
       this._height = height;
@@ -475,6 +517,13 @@ var FObject = (function () {
       this._calculateCenter();
       this.setFlag('canvasDirty', true);
       if (this._scene) this._scene.setFlag('canvasDirty', true);
+
+      return true;
+    }
+  }, {
+    key: 'getDimensions',
+    value: function getDimensions() {
+      return { width: this._width, height: this._height };
     }
   }, {
     key: 'setBackground',
@@ -486,6 +535,11 @@ var FObject = (function () {
       this._background = background;
       this.setFlag('canvasDirty', true);
       if (this._scene) this._scene.setFlag('canvasDirty', true);
+    }
+  }, {
+    key: 'getBackground',
+    value: function getBackground() {
+      return this._background;
     }
   }, {
     key: '_calculateCenter',
@@ -596,7 +650,7 @@ Object.defineProperty(exports, '__esModule', {
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-var _get = function get(_x2, _x3, _x4) { var _again = true; _function: while (_again) { var object = _x2, property = _x3, receiver = _x4; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x2 = parent; _x3 = property; _x4 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+var _get = function get(_x3, _x4, _x5) { var _again = true; _function: while (_again) { var object = _x3, property = _x4, receiver = _x5; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x3 = parent; _x4 = property; _x5 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
@@ -611,6 +665,10 @@ var _FGroup3 = _interopRequireDefault(_FGroup2);
 var _FSelection = require('./FSelection');
 
 var _FSelection2 = _interopRequireDefault(_FSelection);
+
+var _FGroupMember = require('./FGroupMember');
+
+var _FGroupMember2 = _interopRequireDefault(_FGroupMember);
 
 var FScene = (function (_FGroup) {
   _inherits(FScene, _FGroup);
@@ -628,8 +686,12 @@ var FScene = (function (_FGroup) {
 
     _get(Object.getPrototypeOf(FScene.prototype), 'constructor', this).call(this, { canvas: canvas, width: width, height: height });
 
-    this._prevMouseX = 0;
-    this._prevMouseY = 0;
+    this._prevMouseX = undefined;
+    this._prevMouseY = undefined;
+
+    this._mouseDown = undefined;
+    this._mouseSelectionTransparency = 0.8;
+    this._mouseSelectionFillStyle = "#D1D1FF";
 
     // Allows us to listen for keydown/up event
     this._c.tabIndex = 9999;
@@ -754,6 +816,7 @@ var FScene = (function (_FGroup) {
 
       if (addedObjs.length > 0) {
         this._calculateDrawOrder();
+        this.setFlag('canvasDirty', true);
       }
 
       return addedObjs;
@@ -766,6 +829,7 @@ var FScene = (function (_FGroup) {
       }
 
       var removedObjs = _get(Object.getPrototypeOf(FScene.prototype), 'remove', this).call(this, objs);
+      var removedSelections = this._selection.remove(objs);
       var _iteratorNormalCompletion3 = true;
       var _didIteratorError3 = false;
       var _iteratorError3 = undefined;
@@ -796,6 +860,7 @@ var FScene = (function (_FGroup) {
 
       if (removedObjs.length > 0) {
         this._calculateDrawOrder();
+        this.setFlag('canvasDirty', true);
       }
 
       return removedObjs;
@@ -804,6 +869,7 @@ var FScene = (function (_FGroup) {
     key: 'clear',
     value: function clear() {
       var removedObjs = _get(Object.getPrototypeOf(FScene.prototype), 'clear', this).call(this);
+      var removedSelections = this._selection.clear();
       var _iteratorNormalCompletion4 = true;
       var _didIteratorError4 = false;
       var _iteratorError4 = undefined;
@@ -832,26 +898,48 @@ var FScene = (function (_FGroup) {
         }
       }
 
-      this._drawOrder = [];
+      if (removedObjs.length > 0) {
+        this._calculateDrawOrder();
+        this.setFlag('canvasDirty', true);
+      }
 
       return removedObjs;
     }
   }, {
     key: 'select',
     value: function select(objs) {
-      return this._selection.add(objs);
+      var selectedObjs = this._selection.add(objs);
+
+      if (selectedObjs.length > 0) {
+        this.setFlag('canvasDirty', true);
+      }
+
+      return selectedObjs;
     }
   }, {
     key: 'unselect',
     value: function unselect(objs) {
-      if (!objs) return this._selection.clear();
+      var unselectedObjs = [];
 
-      return this._selection.remove(objs);
+      if (!objs) {
+        unselectedObjs = this._selection.clear();
+      } else {
+        unselectedObjs = this._selection.remove(objs);
+      }
+
+      if (unselectedObjs.length > 0) {
+        this.setFlag('canvasDirty', true);
+      }
+
+      return unselectedObjs;
     }
   }, {
     key: '_calculateDrawOrder',
     value: function _calculateDrawOrder() {
-      this._drawOrder = Array.from(this._children).sort(function (a, b) {
+      var sceneObjs = Array.from(this._children);
+      sceneObjs.push(this._selection);
+
+      this._drawOrder = sceneObjs.sort(function (a, b) {
         return a.layer - b.layer;
       });
     }
@@ -863,6 +951,17 @@ var FScene = (function (_FGroup) {
       var x = _getMouseCoords2.x;
       var y = _getMouseCoords2.y;
 
+      this._mouseDown = { x: x, y: y };
+
+      var hitObjs = this.hitTest({ x: x, y: y });
+      if (hitObjs.length > 0) {} else {
+        this.unselect();
+      }
+
+      // Issue onMouseDown event to hitObjs[0].
+
+      this.setFlag('canvasDirty', true);
+
       this._prevMouseX = x;
       this._prevMouseY = y;
     }
@@ -873,6 +972,11 @@ var FScene = (function (_FGroup) {
 
       var x = _getMouseCoords3.x;
       var y = _getMouseCoords3.y;
+
+      this._selection.setDragged(false);
+
+      this._mouseDown = undefined;
+      this.setFlag('canvasDirty', true);
 
       this._prevMouseX = x;
       this._prevMouseY = y;
@@ -908,6 +1012,23 @@ var FScene = (function (_FGroup) {
 
       var x = _getMouseCoords6.x;
       var y = _getMouseCoords6.y;
+
+      var dx = x - this._prevMouseX;
+      var dy = y - this._prevMouseY;
+
+      if (this._mouseDown) {
+        if (this._selection.getSize() > 0) {
+          if (this._selection.hitTest({ x: x, y: y })) {
+            this._selection.setDragged(true);
+
+            var selectionPos = this._selection.getPosition();
+
+            this._selection.setPosition({ x: selectionPos.x + dx, y: selectionPos.y + dy });
+          }
+        }
+
+        this.setFlag('canvasDirty', true);
+      }
 
       this._prevMouseX = x;
       this._prevMouseY = y;
@@ -965,6 +1086,10 @@ var FScene = (function (_FGroup) {
 
           child.draw(this._ctx);
         }
+
+        // if(this._selection.getChildren().size > 0){
+        // this._selection.draw(this._ctx);
+        // }
       } catch (err) {
         _didIteratorError5 = true;
         _iteratorError5 = err;
@@ -980,12 +1105,103 @@ var FScene = (function (_FGroup) {
         }
       }
 
-      if (this._selection.getChildren().size > 0) {
-        this._selection.draw(this._ctx);
+      if (this._mouseDown && this._selection.getDragged() === false) {
+        this._renderMouseSelection(this._ctx);
       }
 
-      // Update this object's canvas here.
       this._ctx.restore();
+    }
+  }, {
+    key: '_renderMouseSelection',
+    value: function _renderMouseSelection(ctx) {
+      var width = this._prevMouseX - this._mouseDown.x;
+      var height = this._prevMouseY - this._mouseDown.y;
+
+      ctx.save();
+      ctx.globalAlpha = this._mouseSelectionTransparency;
+      ctx.fillStyle = this._mouseSelectionFillStyle;
+      ctx.fillRect(this._mouseDown.x, this._mouseDown.y, width, height);
+      ctx.restore();
+    }
+  }, {
+    key: 'hitTest',
+    value: function hitTest() {
+      var _ref2 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+      var x = _ref2.x;
+      var y = _ref2.y;
+      var width = _ref2.width;
+      var height = _ref2.height;
+      var _ref2$ignore = _ref2.ignore;
+      var ignore = _ref2$ignore === undefined ? [] : _ref2$ignore;
+
+      var hitObjs = [];
+
+      var shouldIgnore = function shouldIgnore(obj) {
+        var _iteratorNormalCompletion6 = true;
+        var _didIteratorError6 = false;
+        var _iteratorError6 = undefined;
+
+        try {
+          for (var _iterator6 = ignore[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+            var _class = _step6.value;
+
+            if (obj instanceof _class) {
+              return true;
+            }
+          }
+        } catch (err) {
+          _didIteratorError6 = true;
+          _iteratorError6 = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion6 && _iterator6['return']) {
+              _iterator6['return']();
+            }
+          } finally {
+            if (_didIteratorError6) {
+              throw _iteratorError6;
+            }
+          }
+        }
+
+        return false;
+      };
+
+      var _iteratorNormalCompletion7 = true;
+      var _didIteratorError7 = false;
+      var _iteratorError7 = undefined;
+
+      try {
+        for (var _iterator7 = this._drawOrder[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
+          var obj = _step7.value;
+
+          if (shouldIgnore(obj)) continue;
+
+          if (obj.hitTest({ x: x, y: y, width: width, height: height })) {
+            hitObjs.push(obj);
+          }
+        }
+      } catch (err) {
+        _didIteratorError7 = true;
+        _iteratorError7 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion7 && _iterator7['return']) {
+            _iterator7['return']();
+          }
+        } finally {
+          if (_didIteratorError7) {
+            throw _iteratorError7;
+          }
+        }
+      }
+
+      hitObjs.sort(function (a, b) {
+        return b.layer - a.layer;
+      });
+
+      return hitObjs;
     }
   }, {
     key: '_getMouseCoords',
@@ -1004,7 +1220,7 @@ var FScene = (function (_FGroup) {
 exports['default'] = FScene;
 module.exports = exports['default'];
 
-},{"./FGroup":1,"./FSelection":5}],5:[function(require,module,exports){
+},{"./FGroup":1,"./FGroupMember":2,"./FSelection":5}],5:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -1013,7 +1229,7 @@ Object.defineProperty(exports, '__esModule', {
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-var _get = function get(_x3, _x4, _x5) { var _again = true; _function: while (_again) { var object = _x3, property = _x4, receiver = _x5; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x3 = parent; _x4 = property; _x5 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+var _get = function get(_x4, _x5, _x6) { var _again = true; _function: while (_again) { var object = _x4, property = _x5, receiver = _x6; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x4 = parent; _x5 = property; _x6 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
@@ -1037,7 +1253,6 @@ var FSelection = (function (_FGroup) {
     var width = _ref$width === undefined ? 0 : _ref$width;
     var _ref$height = _ref.height;
     var height = _ref$height === undefined ? 0 : _ref$height;
-    var layer = _ref.layer;
     var scaleX = _ref.scaleX;
     var scaleY = _ref.scaleY;
     var angle = _ref.angle;
@@ -1050,21 +1265,35 @@ var FSelection = (function (_FGroup) {
     var _ref$outlineDash = _ref.outlineDash;
     var outlineDash = _ref$outlineDash === undefined ? [5, 15] : _ref$outlineDash;
     var _ref$transparency = _ref.transparency;
-    var transparency = _ref$transparency === undefined ? 0.5 : _ref$transparency;
+    var transparency = _ref$transparency === undefined ? 0 : _ref$transparency;
 
     _classCallCheck(this, FSelection);
 
-    _get(Object.getPrototypeOf(FSelection.prototype), 'constructor', this).call(this, { x: x, y: y, width: width, height: height, layer: layer, scaleX: scaleX, scaleY: scaleY, angle: angle, background: background, canvas: canvas });
+    _get(Object.getPrototypeOf(FSelection.prototype), 'constructor', this).call(this, { x: x, y: y, width: width, height: height, layer: 9998, scaleX: scaleX, scaleY: scaleY, angle: angle, background: background, canvas: canvas });
+    if (!x) this._position.x = undefined;
+    if (!y) this._position.y = undefined;
 
     this._outlineStyle = outlineStyle;
     this._outlineWidth = outlineWidth;
     this._outlineDash = outlineDash;
     this._transparency = transparency;
 
+    this._dragged = false;
+
     this._ctx.globalAlpha = this._transparency;
   }
 
   _createClass(FSelection, [{
+    key: 'setDragged',
+    value: function setDragged(dragged) {
+      this._dragged = dragged;
+    }
+  }, {
+    key: 'getDragged',
+    value: function getDragged() {
+      return this._dragged;
+    }
+  }, {
     key: 'draw',
     value: function draw(ctx) {
       _get(Object.getPrototypeOf(FSelection.prototype), 'draw', this).call(this, ctx);
@@ -1088,6 +1317,21 @@ var FSelection = (function (_FGroup) {
       ctx.stroke();
 
       ctx.restore();
+    }
+  }, {
+    key: 'getOutlineDash',
+    value: function getOutlineDash() {
+      return this._outlineDash;
+    }
+  }, {
+    key: 'getOutlineWidth',
+    value: function getOutlineWidth() {
+      return this._outlineWidth;
+    }
+  }, {
+    key: 'getOutlineStyle',
+    value: function getOutlineStyle() {
+      return this._outlineStyle;
     }
   }, {
     key: '_updatePositionAndDimensions',
@@ -1154,8 +1398,8 @@ var FSelection = (function (_FGroup) {
         }
       }
 
-      var newX = leftMost || this._position.x;
-      var newY = topMost || this._position.y;
+      var newX = leftMost !== undefined ? leftMost : this._position.x;
+      var newY = topMost !== undefined ? topMost : this._position.y;
       var newWidth = leftMost !== undefined && rightMost !== undefined ? rightMost - leftMost : 0;
       var newHeight = bottomMost !== undefined && topMost !== undefined ? bottomMost - topMost : 0;
 
@@ -1165,40 +1409,39 @@ var FSelection = (function (_FGroup) {
       this._calculateCenter();
     }
   }, {
-    key: 'setDimensions',
-    value: function setDimensions() {
+    key: 'setPosition',
+    value: function setPosition() {
       var _ref2 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-      var _ref2$width = _ref2.width;
-      var width = _ref2$width === undefined ? this._width : _ref2$width;
-      var _ref2$height = _ref2.height;
-      var height = _ref2$height === undefined ? this._height : _ref2$height;
+      var _ref2$x = _ref2.x;
+      var x = _ref2$x === undefined ? this._position.x : _ref2$x;
+      var _ref2$y = _ref2.y;
+      var y = _ref2$y === undefined ? this._position.y : _ref2$y;
+      var _ref2$layer = _ref2.layer;
+      var layer = _ref2$layer === undefined ? this._position.layer : _ref2$layer;
 
-      _get(Object.getPrototypeOf(FSelection.prototype), 'setDimensions', this).call(this, { width: width, height: height });
+      var originalX = this._position.x !== undefined ? this._position.x : x;
+      var originalY = this._position.y !== undefined ? this._position.y : y;
 
-      this._ctx.globalAlpha = this._transparency;
-    }
-  }, {
-    key: 'add',
-    value: function add(objs) {
-      if (!Array.isArray(objs)) {
-        objs = [objs];
-      }
+      var selectionPosChanged = _get(Object.getPrototypeOf(FSelection.prototype), 'setPosition', this).call(this, { x: x, y: y, layer: layer });
+      if (!selectionPosChanged) return false;
 
-      var toAdd = [];
+      var dx = this._position.x - originalX;
+      var dy = this._position.y - originalY;
 
       var _iteratorNormalCompletion3 = true;
       var _didIteratorError3 = false;
       var _iteratorError3 = undefined;
 
       try {
-        for (var _iterator3 = objs[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-          var obj = _step3.value;
+        for (var _iterator3 = this[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+          var child = _step3.value;
 
-          // If it belongs to a different scene, ignore it.
-          if (obj.getScene() !== this._scene) continue;
+          var childPosition = child.getPosition();
+          var childX = childPosition.x;
+          var childY = childPosition.y;
 
-          toAdd.push(obj);
+          child.setPosition({ x: childX + dx, y: childY + dy }, true);
         }
       } catch (err) {
         _didIteratorError3 = true;
@@ -1215,16 +1458,47 @@ var FSelection = (function (_FGroup) {
         }
       }
 
-      var addedObjs = _get(Object.getPrototypeOf(FSelection.prototype), 'add', this).call(this, toAdd);
+      return true;
+    }
+  }, {
+    key: 'setDimensions',
+    value: function setDimensions() {
+      var _ref3 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+      var _ref3$width = _ref3.width;
+      var width = _ref3$width === undefined ? this._width : _ref3$width;
+      var _ref3$height = _ref3.height;
+      var height = _ref3$height === undefined ? this._height : _ref3$height;
+
+      var selectionDimChanged = _get(Object.getPrototypeOf(FSelection.prototype), 'setDimensions', this).call(this, { width: width, height: height });
+      if (!selectionDimChanged) return false;
+
+      this._ctx.globalAlpha = this._transparency;
+
+      // TODO: Scale all children, figure it out...
+      return true;
+    }
+  }, {
+    key: 'add',
+    value: function add(objs) {
+      if (!Array.isArray(objs)) {
+        objs = [objs];
+      }
+
+      var toAdd = [];
+
       var _iteratorNormalCompletion4 = true;
       var _didIteratorError4 = false;
       var _iteratorError4 = undefined;
 
       try {
-        for (var _iterator4 = addedObjs[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+        for (var _iterator4 = objs[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
           var obj = _step4.value;
 
-          obj.setSelector(this);
+          // If it belongs to a different scene, ignore it.
+          if (obj.getScene() !== this._scene) continue;
+
+          toAdd.push(obj);
         }
       } catch (err) {
         _didIteratorError4 = true;
@@ -1241,27 +1515,17 @@ var FSelection = (function (_FGroup) {
         }
       }
 
-      this._updatePositionAndDimensions();
+      var addedObjs = _get(Object.getPrototypeOf(FSelection.prototype), 'add', this).call(this, toAdd);
 
-      return addedObjs;
-    }
-  }, {
-    key: 'remove',
-    value: function remove(objs) {
-      if (!Array.isArray(objs)) {
-        objs = [objs];
-      }
-
-      var removedObjs = _get(Object.getPrototypeOf(FSelection.prototype), 'remove', this).call(this, objs);
       var _iteratorNormalCompletion5 = true;
       var _didIteratorError5 = false;
       var _iteratorError5 = undefined;
 
       try {
-        for (var _iterator5 = removedObjs[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+        for (var _iterator5 = addedObjs[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
           var obj = _step5.value;
 
-          obj.setSelector(undefined);
+          obj.setSelector(this);
         }
       } catch (err) {
         _didIteratorError5 = true;
@@ -1278,14 +1542,20 @@ var FSelection = (function (_FGroup) {
         }
       }
 
+      this._position.x = undefined;
+      this._position.y = undefined;
       this._updatePositionAndDimensions();
 
-      return removedObjs;
+      return addedObjs;
     }
   }, {
-    key: 'clear',
-    value: function clear() {
-      var removedObjs = _get(Object.getPrototypeOf(FSelection.prototype), 'clear', this).call(this);
+    key: 'remove',
+    value: function remove(objs) {
+      if (!Array.isArray(objs)) {
+        objs = [objs];
+      }
+
+      var removedObjs = _get(Object.getPrototypeOf(FSelection.prototype), 'remove', this).call(this, objs);
       var _iteratorNormalCompletion6 = true;
       var _didIteratorError6 = false;
       var _iteratorError6 = undefined;
@@ -1311,6 +1581,43 @@ var FSelection = (function (_FGroup) {
         }
       }
 
+      this._position.x = undefined;
+      this._position.y = undefined;
+      this._updatePositionAndDimensions();
+
+      return removedObjs;
+    }
+  }, {
+    key: 'clear',
+    value: function clear() {
+      var removedObjs = _get(Object.getPrototypeOf(FSelection.prototype), 'clear', this).call(this);
+      var _iteratorNormalCompletion7 = true;
+      var _didIteratorError7 = false;
+      var _iteratorError7 = undefined;
+
+      try {
+        for (var _iterator7 = removedObjs[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
+          var obj = _step7.value;
+
+          obj.setSelector(undefined);
+        }
+      } catch (err) {
+        _didIteratorError7 = true;
+        _iteratorError7 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion7 && _iterator7['return']) {
+            _iterator7['return']();
+          }
+        } finally {
+          if (_didIteratorError7) {
+            throw _iteratorError7;
+          }
+        }
+      }
+
+      this._position.x = undefined;
+      this._position.y = undefined;
       this._updatePositionAndDimensions();
 
       return removedObjs;
