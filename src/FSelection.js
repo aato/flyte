@@ -1,8 +1,8 @@
 import FGroup from './FGroup';
 
 export default class FSelection extends FGroup{
-  constructor({x, y, width = 0, height = 0, scaleX, scaleY, angle, background, canvas, outlineStyle = '#2222BB', outlineWidth = 5, outlineDash = [5, 15], transparency = 0} = {}){
-    super({x, y, width, height, layer: 9998, scaleX, scaleY, angle, background, canvas});
+  constructor({x, y, width = 0, height = 0, scaleX, scaleY, angle, background, canvas, outlineStyle = 'black', outlineWidth = 2, outlineDash = [], transparency = 0} = {}){
+    super({x, y, width, height, layer: Number.MAX_SAFE_INTEGER - 1, scaleX, scaleY, angle, background, canvas});
     if(!x) this._position.x = undefined;
     if(!y) this._position.y = undefined;
 
@@ -14,6 +14,10 @@ export default class FSelection extends FGroup{
     this._dragged         = false;
 
     this._ctx.globalAlpha = this._transparency;
+  }
+
+  _onMouseDown(e){
+    console.log('mousedown on selection!');
   }
 
   setDragged(dragged){
@@ -38,12 +42,14 @@ export default class FSelection extends FGroup{
       ctx.strokeStyle = this._outlineStyle;
 
       ctx.beginPath();
-      ctx.moveTo(-this._width / 2, -this._height / 2);
-      ctx.lineTo(-this._width / 2 + this._width, -this._height / 2);
-      ctx.lineTo(-this._width / 2 + this._width, -this._height / 2 + this._height);
-      ctx.lineTo(-this._width / 2, -this._height / 2 + this._height);
-      ctx.lineTo(-this._width / 2, -this._height / 2);
+      ctx.rect(-this._width / 2, -this._height / 2, this._width, this._height);
       ctx.stroke();
+
+      // ctx.moveTo(-this._width / 2, -this._height / 2);
+      // ctx.lineTo(-this._width / 2 + this._width, -this._height / 2);
+      // ctx.lineTo(-this._width / 2 + this._width, -this._height / 2 + this._height);
+      // ctx.lineTo(-this._width / 2, -this._height / 2 + this._height);
+      // ctx.lineTo(-this._width / 2, -this._height / 2);
 
     ctx.restore();
   }
