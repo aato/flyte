@@ -1,4 +1,6 @@
 import FObject from './FObject';
+// import FScene from './FScene';
+// import FSelection from './FSelection';
 import FGroupMember from './FGroupMember';
 
 export default class FGroup extends FObject {
@@ -94,5 +96,35 @@ export default class FGroup extends FObject {
 
   getChildren(){
     return this._children;
+  }
+
+  hitTest({x, y, width, height, ignore = [], againstSelf = false, againstChildren = true} = {}){
+    var hitObjs = [];
+
+    if(againstSelf && super.hitTest({x, y, width, height}).length > 0){
+      hitObjs.push(this);
+    }
+
+    if(againstChildren){
+      let shouldIgnore = (obj) => {
+        for(var _class of ignore){
+          if(obj instanceof _class){
+            return true;
+          }
+        }
+
+        return false;
+      };
+
+      for(let obj of this._children){
+        if(shouldIgnore(obj)) continue;
+
+        if(obj.hitTest({x, y, width, height}).length > 0){
+          hitObjs.push(obj);
+        }
+      }
+    }
+
+    return hitObjs;
   }
 }

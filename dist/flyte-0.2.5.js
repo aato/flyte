@@ -33,7 +33,7 @@ Object.defineProperty(exports, '__esModule', {
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-var _get = function get(_x2, _x3, _x4) { var _again = true; _function: while (_again) { var object = _x2, property = _x3, receiver = _x4; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x2 = parent; _x3 = property; _x4 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+var _get = function get(_x3, _x4, _x5) { var _again = true; _function: while (_again) { var object = _x3, property = _x4, receiver = _x5; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x3 = parent; _x4 = property; _x5 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
@@ -44,6 +44,9 @@ function _inherits(subClass, superClass) { if (typeof superClass !== 'function' 
 var _FObject2 = require('./FObject');
 
 var _FObject3 = _interopRequireDefault(_FObject2);
+
+// import FScene from './FScene';
+// import FSelection from './FSelection';
 
 var _FGroupMember = require('./FGroupMember');
 
@@ -248,6 +251,92 @@ var FGroup = (function (_FObject) {
     key: 'getChildren',
     value: function getChildren() {
       return this._children;
+    }
+  }, {
+    key: 'hitTest',
+    value: function hitTest() {
+      var _ref2 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+      var x = _ref2.x;
+      var y = _ref2.y;
+      var width = _ref2.width;
+      var height = _ref2.height;
+      var _ref2$ignore = _ref2.ignore;
+      var ignore = _ref2$ignore === undefined ? [] : _ref2$ignore;
+      var _ref2$againstSelf = _ref2.againstSelf;
+      var againstSelf = _ref2$againstSelf === undefined ? false : _ref2$againstSelf;
+      var _ref2$againstChildren = _ref2.againstChildren;
+      var againstChildren = _ref2$againstChildren === undefined ? true : _ref2$againstChildren;
+
+      var hitObjs = [];
+
+      if (againstSelf && _get(Object.getPrototypeOf(FGroup.prototype), 'hitTest', this).call(this, { x: x, y: y, width: width, height: height }).length > 0) {
+        hitObjs.push(this);
+      }
+
+      if (againstChildren) {
+        var shouldIgnore = function shouldIgnore(obj) {
+          var _iteratorNormalCompletion4 = true;
+          var _didIteratorError4 = false;
+          var _iteratorError4 = undefined;
+
+          try {
+            for (var _iterator4 = ignore[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+              var _class = _step4.value;
+
+              if (obj instanceof _class) {
+                return true;
+              }
+            }
+          } catch (err) {
+            _didIteratorError4 = true;
+            _iteratorError4 = err;
+          } finally {
+            try {
+              if (!_iteratorNormalCompletion4 && _iterator4['return']) {
+                _iterator4['return']();
+              }
+            } finally {
+              if (_didIteratorError4) {
+                throw _iteratorError4;
+              }
+            }
+          }
+
+          return false;
+        };
+
+        var _iteratorNormalCompletion5 = true;
+        var _didIteratorError5 = false;
+        var _iteratorError5 = undefined;
+
+        try {
+          for (var _iterator5 = this._children[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+            var obj = _step5.value;
+
+            if (shouldIgnore(obj)) continue;
+
+            if (obj.hitTest({ x: x, y: y, width: width, height: height }).length > 0) {
+              hitObjs.push(obj);
+            }
+          }
+        } catch (err) {
+          _didIteratorError5 = true;
+          _iteratorError5 = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion5 && _iterator5['return']) {
+              _iterator5['return']();
+            }
+          } finally {
+            if (_didIteratorError5) {
+              throw _iteratorError5;
+            }
+          }
+        }
+      }
+
+      return hitObjs;
     }
   }]);
 
@@ -616,31 +705,31 @@ var FObject = (function () {
       var width = _ref5.width;
       var height = _ref5.height;
 
-      if (!x || !y) return false;
+      if (!x || !y) return [];
 
       // If we're testing for a single point.
       if (!width || !height) {
         if (x >= this._position.x && x <= this._position.x + this._width && y <= this._position.y + this._height && y >= this._position.y) {
-          return true;
+          return [this];
         }
         // If we're testing for a rectangle.
       } else {
           if (x <= this._position.x && x + width >= this._position.x) {
             if (y <= this._position.y && y + height >= this._position.y) {
-              return true;
+              return [this];
             } else if (y <= this._position.y + this._height && y + height >= this._position.y + this._height) {
-              return true;
+              return [this];
             }
           } else if (x <= this._position.x + this._width && x + width >= this._position.x + this._width) {
             if (y <= this._position.y && y + height >= this._position.y) {
-              return true;
+              return [this];
             } else if (y <= this._position.y + this._height && y + height >= this._position.y + this._height) {
-              return true;
+              return [this];
             }
           }
         }
 
-      return false;
+      return [];
     }
   }, {
     key: 'addEventListener',
@@ -951,7 +1040,7 @@ var FScene = (function (_FGroup) {
       }
 
       this._drawOrder = sceneObjs.sort(function (a, b) {
-        return a.layer - b.layer;
+        return a.getPosition().layer - b.getPosition.layer;
       });
     }
   }, {
@@ -965,8 +1054,11 @@ var FScene = (function (_FGroup) {
       e.flyte = { mouse: { x: x, y: y } };
       this._mouseDown = { x: x, y: y };
 
-      // Has the mouse hit anything at all?
-      var hitObjs = this.hitTest({ x: x, y: y });
+      // Has the mouse hit anything? Sort by highest to lowest layer.
+      var hitObjs = this.hitTest({ x: x, y: y }).sort(function (a, b) {
+        return b.getPosition().layer - a.getPosition().layer;
+      });
+
       if (hitObjs.length > 0) {
         hitObjs[0].trigger('onmousedown', e);
       } else {
@@ -999,8 +1091,6 @@ var FScene = (function (_FGroup) {
       var x = _getMouseCoords4.x;
       var y = _getMouseCoords4.y;
 
-      // console.log(this.hitTest({x, y}));
-
       this._mousePrev = { x: x, y: y };
     }
   }, {
@@ -1028,7 +1118,8 @@ var FScene = (function (_FGroup) {
 
       if (this._mouseDown) {
         if (this._selection.getSize() > 0) {
-          if (this._selection.hitTest({ x: x, y: y })) {
+          var selectionHit = this._selection.hitTest({ x: this._mousePrev.x, y: this._mousePrev.y, againstSelf: true, againstChildren: false })[0];
+          if (selectionHit) {
             this._selection.setDragged(true);
 
             var selectionPos = this._selection.getPosition();
@@ -1128,6 +1219,21 @@ var FScene = (function (_FGroup) {
       ctx.restore();
     }
   }, {
+    key: '_getMouseCoords',
+    value: function _getMouseCoords(e) {
+      var rect = this._c.getBoundingClientRect();
+      var x = e.clientX - rect.left;
+      var y = e.clientY - rect.top;
+
+      return { x: x, y: y };
+    }
+  }, {
+    key: 'addEventListener',
+    value: function addEventListener(eventType, fn) {
+      var _fn = fn.bind(this);
+      this._c[eventType] = _fn;
+    }
+  }, {
     key: 'hitTest',
     value: function hitTest() {
       var _ref2 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
@@ -1182,7 +1288,7 @@ var FScene = (function (_FGroup) {
 
           if (shouldIgnore(obj)) continue;
 
-          if (obj.hitTest({ x: x, y: y, width: width, height: height })) {
+          if (obj.hitTest({ x: x, y: y, width: width, height: height, againstSelf: true, againstChildren: false }).length > 0) {
             hitObjs.push(obj);
           }
         }
@@ -1201,26 +1307,7 @@ var FScene = (function (_FGroup) {
         }
       }
 
-      hitObjs.sort(function (a, b) {
-        return b.layer - a.layer;
-      });
-
       return hitObjs;
-    }
-  }, {
-    key: '_getMouseCoords',
-    value: function _getMouseCoords(e) {
-      var rect = this._c.getBoundingClientRect();
-      var x = e.clientX - rect.left;
-      var y = e.clientY - rect.top;
-
-      return { x: x, y: y };
-    }
-  }, {
-    key: 'addEventListener',
-    value: function addEventListener(eventType, fn) {
-      var _fn = fn.bind(this);
-      this._c[eventType] = _fn;
     }
   }]);
 

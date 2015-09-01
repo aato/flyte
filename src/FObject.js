@@ -164,31 +164,31 @@ export default class FObject{
   }
 
   hitTest({x, y, width, height} = {}){
-    if(!x || !y) return false;
+    if(!x || !y) return [];
 
     // If we're testing for a single point.
     if(!width || !height){
       if(x >= this._position.x && x <= this._position.x + this._width && y <= this._position.y + this._height && y >= this._position.y){
-        return true;
+        return [this];
       }
     // If we're testing for a rectangle.
     } else {
       if(x <= this._position.x && x + width >= this._position.x){
         if(y <= this._position.y && y + height >= this._position.y){
-          return true;
+          return [this];
         } else if (y <= this._position.y + this._height && y + height >= this._position.y + this._height){
-          return true;
+          return [this];
         }
       } else if(x <= this._position.x + this._width && x + width >= this._position.x + this._width) {
         if(y <= this._position.y && y + height >= this._position.y){
-          return true;
+          return [this];
         } else if (y <= this._position.y + this._height && y + height >= this._position.y + this._height){
-          return true;
+          return [this];
         }
       }
     }
 
-    return false;
+    return [];
   }
 
   addEventListener(eventType, fn){

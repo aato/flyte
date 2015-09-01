@@ -185,32 +185,4 @@ export default class FSelection extends FGroup{
 
     return removedObjs;
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }

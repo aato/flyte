@@ -157,7 +157,7 @@ export default class FScene extends FGroup{
     }
 
     this._drawOrder = sceneObjs.sort((a, b) => {
-      return a.layer - b.layer;
+      return a.getPosition().layer - b.getPosition.layer;
     })
   }
 
@@ -178,8 +178,11 @@ export default class FScene extends FGroup{
     e.flyte = {mouse: {x, y}};
     this._mouseDown = {x, y};
 
-    // Has the mouse hit anything at all?
-    var hitObjs = this.hitTest({x, y});
+    // Has the mouse hit anything? Sort by highest to lowest layer.
+    var hitObjs = this.hitTest({x, y}).sort((a,b) => {
+      return b.getPosition().layer - a.getPosition().layer
+    });
+
     if(hitObjs.length > 0){
       hitObjs[0].trigger('onmousedown', e);
     } else {
@@ -204,8 +207,6 @@ export default class FScene extends FGroup{
   _onClick(e){
     var {x, y} = this._getMouseCoords(e);
 
-    // console.log(this.hitTest({x, y}));
-
     this._mousePrev = {x, y};
   }
 
@@ -225,7 +226,8 @@ export default class FScene extends FGroup{
 
     if(this._mouseDown){
       if(this._selection.getSize() > 0){
-        if(this._selection.hitTest({x, y})){
+        let selectionHit = this._selection.hitTest({x: this._mousePrev.x, y: this._mousePrev.y, againstSelf: true, againstChildren: false})[0];
+        if(selectionHit){
           this._selection.setDragged(true);
 
           let selectionPos = this._selection.getPosition();
@@ -295,6 +297,19 @@ export default class FScene extends FGroup{
     ctx.restore();
   }
 
+  _getMouseCoords(e){
+    var rect = this._c.getBoundingClientRect();
+    var x = e.clientX - rect.left;
+    var y = e.clientY - rect.top;
+
+    return {x, y};
+  }
+
+  addEventListener(eventType, fn){
+    var _fn = fn.bind(this);
+    this._c[eventType] = _fn;
+  }
+
   hitTest({x, y, width, height, ignore = []} = {}){
     var hitObjs = [];
 
@@ -311,28 +326,11 @@ export default class FScene extends FGroup{
     for(let obj of this._drawOrder){
       if(shouldIgnore(obj)) continue;
 
-      if(obj.hitTest({x, y, width, height})){
+      if(obj.hitTest({x, y, width, height, againstSelf: true, againstChildren: false}).length > 0){
         hitObjs.push(obj);
       }
     }
 
-    hitObjs.sort((a, b) => {
-      return b.layer - a.layer;
-    })
-
     return hitObjs;
-  }
-
-  _getMouseCoords(e){
-    var rect = this._c.getBoundingClientRect();
-    var x = e.clientX - rect.left;
-    var y = e.clientY - rect.top;
-
-    return {x, y};
-  }
-
-  addEventListener(eventType, fn){
-    var _fn = fn.bind(this);
-    this._c[eventType] = _fn;
   }
 }
