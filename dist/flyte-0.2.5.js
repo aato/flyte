@@ -20,7 +20,7 @@ return function WeakMap(){return get(this,arguments[0])}},{get:function get(key)
  * flyte - Object model for the HTML5 canvas - a lightweight, faster alternative to fabric.js
  * @version v0.2.5
  * @license MIT
- * @date 2015-08-31
+ * @date 2015-09-01
  * @preserve
  * Copyright (c) Alex Alksne <alex.alksne@gmail.com> 2015 All Rights Reserved.
  */
@@ -408,8 +408,21 @@ var FGroupMember = (function (_FObject) {
   _createClass(FGroupMember, [{
     key: '_onMouseDown',
     value: function _onMouseDown(e) {
-      console.log('mousedown on groupMember!');
+      // TODO: Add to existing selection if CTRL is pressed down.
+      if (!this._scene.getSelection().contains(this)) {
+        this._scene.unselect();
+        this._scene.select(this);
+        this._scene.setFlag('canvasDirty', true);
+      }
+
+      this._scene.getSelection().trigger('onmousedown', e);
     }
+  }, {
+    key: '_onMouseUp',
+    value: function _onMouseUp(e) {}
+  }, {
+    key: '_onMouseMove',
+    value: function _onMouseMove(e) {}
   }, {
     key: 'setSelector',
     value: function setSelector(selector) {
@@ -519,6 +532,8 @@ var FObject = (function () {
     this._calculateCenter();
 
     this.addEventListener('onmousedown', this._onMouseDown);
+    this.addEventListener('onmouseup', this._onMouseUp);
+    this.addEventListener('onmousemove', this._onMouseMove);
   }
 
   _createClass(FObject, [{
@@ -734,7 +749,10 @@ var FObject = (function () {
   }, {
     key: 'addEventListener',
     value: function addEventListener(eventType, fn) {
-      this._events.set(eventType, fn);
+      var _fn = fn.bind(this);
+      this._events.set(eventType, _fn);
+
+      return eventType;
     }
   }, {
     key: 'trigger',
@@ -746,6 +764,12 @@ var FObject = (function () {
   }, {
     key: '_onMouseDown',
     value: function _onMouseDown(e) {}
+  }, {
+    key: '_onMouseUp',
+    value: function _onMouseUp(e) {}
+  }, {
+    key: '_onMouseMove',
+    value: function _onMouseMove(e) {}
   }]);
 
   return FObject;
@@ -845,6 +869,11 @@ var FScene = (function (_FGroup) {
   }
 
   _createClass(FScene, [{
+    key: 'getSelection',
+    value: function getSelection() {
+      return this._selection;
+    }
+  }, {
     key: 'add',
     value: function add(objs) {
       if (!Array.isArray(objs)) {
@@ -1044,6 +1073,13 @@ var FScene = (function (_FGroup) {
       });
     }
   }, {
+    key: 'getTopObj',
+    value: function getTopObj(x, y) {
+      return this.hitTest({ x: x, y: y }).sort(function (a, b) {
+        return b.getPosition().layer - a.getPosition().layer;
+      })[0];
+    }
+  }, {
     key: '_onMouseDown',
     value: function _onMouseDown(e) {
       var _getMouseCoords2 = this._getMouseCoords(e);
@@ -1051,21 +1087,17 @@ var FScene = (function (_FGroup) {
       var x = _getMouseCoords2.x;
       var y = _getMouseCoords2.y;
 
-      e.flyte = { mouse: { x: x, y: y } };
       this._mouseDown = { x: x, y: y };
+      e.flyte = { mouse: { x: x, y: y } };
 
       // Has the mouse hit anything? Sort by highest to lowest layer.
-      var hitObjs = this.hitTest({ x: x, y: y }).sort(function (a, b) {
-        return b.getPosition().layer - a.getPosition().layer;
-      });
-
-      if (hitObjs.length > 0) {
-        hitObjs[0].trigger('onmousedown', e);
+      var topObj = this.getTopObj(x, y);
+      if (topObj) {
+        topObj.trigger('onmousedown', e);
       } else {
         this.unselect();
       }
 
-      this.setFlag('canvasDirty', true);
       this._mousePrev = { x: x, y: y };
     }
   }, {
@@ -1076,11 +1108,13 @@ var FScene = (function (_FGroup) {
       var x = _getMouseCoords3.x;
       var y = _getMouseCoords3.y;
 
-      this._selection.setDragged(false);
+      // Has the mouse hit anything? Sort by highest to lowest layer.
+      var topObj = this.getTopObj(x, y);
+      if (topObj) {
+        topObj.trigger('onmouseup', e);
+      }
 
       this._mouseDown = undefined;
-
-      this.setFlag('canvasDirty', true);
       this._mousePrev = { x: x, y: y };
     }
   }, {
@@ -1113,21 +1147,21 @@ var FScene = (function (_FGroup) {
 
       this._mousePrev = this._mousePrev ? this._mousePrev : { x: x, y: y };
 
-      var dx = x - this._mousePrev.x;
-      var dy = y - this._mousePrev.y;
+      e.flyte = {
+        mouse: { x: x, y: y },
+        dx: x - this._mousePrev.x,
+        dy: y - this._mousePrev.y,
+        mouseDown: this._mouseDown
+      };
+
+      // Has the mouse hit anything? Sort by highest to lowest layer.
+      var topObj = this.getTopObj(this._mousePrev.x, this._mousePrev.y);
+
+      if (topObj) {
+        topObj.trigger('onmousemove', e);
+      }
 
       if (this._mouseDown) {
-        if (this._selection.getSize() > 0) {
-          var selectionHit = this._selection.hitTest({ x: this._mousePrev.x, y: this._mousePrev.y, againstSelf: true, againstChildren: false })[0];
-          if (selectionHit) {
-            this._selection.setDragged(true);
-
-            var selectionPos = this._selection.getPosition();
-
-            this._selection.setPosition({ x: selectionPos.x + dx, y: selectionPos.y + dy });
-          }
-        }
-
         this.setFlag('canvasDirty', true);
       }
 
@@ -1230,8 +1264,9 @@ var FScene = (function (_FGroup) {
   }, {
     key: 'addEventListener',
     value: function addEventListener(eventType, fn) {
-      var _fn = fn.bind(this);
-      this._c[eventType] = _fn;
+      var addedEventType = _get(Object.getPrototypeOf(FScene.prototype), 'addEventListener', this).call(this, eventType, fn);
+
+      this._c[addedEventType] = this._events.get(addedEventType);
     }
   }, {
     key: 'hitTest',
@@ -1386,6 +1421,24 @@ var FSelection = (function (_FGroup) {
       console.log('mousedown on selection!');
     }
   }, {
+    key: '_onMouseUp',
+    value: function _onMouseUp(e) {
+      this.setDragged(false);
+      this._scene.setFlag('canvasDirty', true);
+    }
+  }, {
+    key: '_onMouseMove',
+    value: function _onMouseMove(e) {
+      if (this.getSize() > 0 && e.flyte.mouseDown) {
+        this.setDragged(true);
+
+        var pos = this.getPosition();
+        if (this.setPosition({ x: pos.x + e.flyte.dx, y: pos.y + e.flyte.dy })) {
+          this._scene.setFlag('canvasDirty', true);
+        }
+      }
+    }
+  }, {
     key: 'setDragged',
     value: function setDragged(dragged) {
       this._dragged = dragged;
@@ -1413,12 +1466,6 @@ var FSelection = (function (_FGroup) {
       ctx.beginPath();
       ctx.rect(-this._width / 2, -this._height / 2, this._width, this._height);
       ctx.stroke();
-
-      // ctx.moveTo(-this._width / 2, -this._height / 2);
-      // ctx.lineTo(-this._width / 2 + this._width, -this._height / 2);
-      // ctx.lineTo(-this._width / 2 + this._width, -this._height / 2 + this._height);
-      // ctx.lineTo(-this._width / 2, -this._height / 2 + this._height);
-      // ctx.lineTo(-this._width / 2, -this._height / 2);
 
       ctx.restore();
     }
