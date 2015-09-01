@@ -184,7 +184,13 @@ export default class FScene extends FGroup{
   _onMouseDown(e){
     var {x, y} = this._getMouseCoords(e);
     this._mouseDown = {x, y};
-    e.flyte = {mouse: {x, y}};
+
+    e.flyte = {
+      mouse: {x, y},
+      dx: undefined,
+      dy: undefined,
+      mouseDown: this._mouseDown
+    };
 
     // Has the mouse hit anything? Sort by highest to lowest layer.
     var topObj = this.getTopObj(x, y);
@@ -200,13 +206,45 @@ export default class FScene extends FGroup{
   _onMouseUp(e){
     var {x, y} = this._getMouseCoords(e);
 
+    var selectionArea = {
+      x: this._mouseDown.x,
+      y: this._mouseDown.y,
+      width: x - this._mouseDown.x,
+      height: y - this._mouseDown.y
+    }
+    if(selectionArea.width < 0){
+      selectionArea.x = x;
+      selectionArea.width *= -1;
+    }
+    if(selectionArea.height < 0){
+      selectionArea.y = y;
+      selectionArea.height *= -1;
+    }
+    var objsToSelect = super.hitTest(selectionArea);
+    if(objsToSelect.length > 0){
+      this.unselect();
+      this.select(objsToSelect);
+    }
+
+    if(x !== this._mouseDown.x || y !== this._mouseDown.y){
+      this.setFlag('canvasDirty', true);
+    }
+
+    this._mouseDown = undefined;
+
+    e.flyte = {
+      mouse: {x, y},
+      dx: undefined,
+      dy: undefined,
+      mouseDown: this._mouseDown
+    };
+
     // Has the mouse hit anything? Sort by highest to lowest layer.
     var topObj = this.getTopObj(x, y);
     if(topObj){
       topObj.trigger('onmouseup', e);
     }
 
-    this._mouseDown = undefined;
     this._mousePrev = {x, y};
   }
 
