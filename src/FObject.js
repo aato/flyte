@@ -22,7 +22,11 @@ export default class FObject{
                         canvasDirty: true
                       }
 
+    this._events      = new Map();
+
     this._calculateCenter();
+
+    this.addEventListener('onmousedown', this._onMouseDown)
   }
 
   getLayer(){
@@ -149,7 +153,7 @@ export default class FObject{
   }
 
   _render(){
-    console.log('OBJECT RENDER');
+    // console.log('OBJECT RENDER');
     this._ctx.save();
       this._ctx.clearRect(0, 0, this._width, this._height);
       this._ctx.fillStyle = this._background;
@@ -185,5 +189,18 @@ export default class FObject{
     }
 
     return false;
+  }
+
+  addEventListener(eventType, fn){
+    this._events.set(eventType, fn);
+  }
+
+  trigger(eventType, e){
+    if(this._events.has(eventType)){
+      this._events.get(eventType)(e);
+    }
+  }
+
+  _onMouseDown(e){
   }
 }

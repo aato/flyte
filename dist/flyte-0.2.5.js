@@ -317,6 +317,11 @@ var FGroupMember = (function (_FObject) {
   }
 
   _createClass(FGroupMember, [{
+    key: '_onMouseDown',
+    value: function _onMouseDown(e) {
+      console.log('mousedown on groupMember!');
+    }
+  }, {
     key: 'setSelector',
     value: function setSelector(selector) {
       this._selector = selector;
@@ -420,7 +425,11 @@ var FObject = (function () {
       canvasDirty: true
     };
 
+    this._events = new Map();
+
     this._calculateCenter();
+
+    this.addEventListener('onmousedown', this._onMouseDown);
   }
 
   _createClass(FObject, [{
@@ -588,7 +597,7 @@ var FObject = (function () {
   }, {
     key: '_render',
     value: function _render() {
-      console.log('OBJECT RENDER');
+      // console.log('OBJECT RENDER');
       this._ctx.save();
       this._ctx.clearRect(0, 0, this._width, this._height);
       this._ctx.fillStyle = this._background;
@@ -633,6 +642,21 @@ var FObject = (function () {
 
       return false;
     }
+  }, {
+    key: 'addEventListener',
+    value: function addEventListener(eventType, fn) {
+      this._events.set(eventType, fn);
+    }
+  }, {
+    key: 'trigger',
+    value: function trigger(eventType, e) {
+      if (this._events.has(eventType)) {
+        this._events.get(eventType)(e);
+      }
+    }
+  }, {
+    key: '_onMouseDown',
+    value: function _onMouseDown(e) {}
   }]);
 
   return FObject;
@@ -684,17 +708,16 @@ var FScene = (function (_FGroup) {
 
     _classCallCheck(this, FScene);
 
-    _get(Object.getPrototypeOf(FScene.prototype), 'constructor', this).call(this, { canvas: canvas, width: width, height: height });
+    _get(Object.getPrototypeOf(FScene.prototype), 'constructor', this).call(this, { canvas: canvas, width: width, height: height, layer: Number.MIN_SAFE_INTEGER });
 
-    this._prevMouseX = undefined;
-    this._prevMouseY = undefined;
+    this._mousePrev = undefined;
 
     this._mouseDown = undefined;
     this._mouseSelectionTransparency = 0.8;
     this._mouseSelectionFillStyle = "#D1D1FF";
 
     // Allows us to listen for keydown/up event
-    this._c.tabIndex = 9999;
+    this._c.tabIndex = Number.MAX_SAFE_INTEGER;
     // Prevents canvas from being outlined.
     this._c.style.outline = "none";
 
@@ -706,46 +729,30 @@ var FScene = (function (_FGroup) {
       };
     })();
 
-    this._id = this._nextID();
-    this._scene = this;
+    this.setID(this._nextID());
+    this.setScene(this);
 
     this._selection = new _FSelection2['default']();
     this._selection.setID(this._nextID());
     this._selection.setScene(this);
 
-    var __onMouseDown = this._onMouseDown.bind(this);
-    this._c.onmousedown = __onMouseDown;
+    this._drawOrder = [];
+    this._flags.drawOrderDirty = true;
 
-    var __onMouseUp = this._onMouseUp.bind(this);
-    this._c.onmouseup = __onMouseUp;
-
-    var __onClick = this._onClick.bind(this);
-    this._c.onclick = __onClick;
-
-    var __onDoubleClick = this._onDoubleClick.bind(this);
-    this._c.ondblclick = __onDoubleClick;
-
-    var __onMouseMove = this._onMouseMove.bind(this);
-    this._c.onmousemove = __onMouseMove;
-
-    var __onMouseOut = this._onMouseOut.bind(this);
-    this._c.onmouseout = __onMouseOut;
-
-    var __onKeyDown = this._onKeyDown.bind(this);
-    this._c.onkeydown = __onKeyDown;
-
-    var __onKeyUp = this._onKeyUp.bind(this);
-    this._c.onkeyup = __onKeyUp;
+    this.addEventListener('onmousedown', this._onMouseDown);
+    this.addEventListener('onmouseup', this._onMouseUp);
+    this.addEventListener('onclick', this._onClick);
+    this.addEventListener('ondblclick', this._onDoubleClick);
+    this.addEventListener('onmousemove', this._onMouseMove);
+    this.addEventListener('onmouseout', this._onMouseOut);
+    this.addEventListener('onkeydown', this._onKeyDown);
+    this.addEventListener('onkeyup', this._onKeyUp);
 
     this._request = requestFrame('request').bind(window);
     this._cancel = requestFrame('cancel').bind(window);
 
     this._draw = this.draw.bind(this, this._ctx);
     this._requestID = this._request(this._draw);
-
-    this._drawOrder = [];
-
-    this._flags.drawOrderDirty = true;
   }
 
   _createClass(FScene, [{
@@ -911,6 +918,7 @@ var FScene = (function (_FGroup) {
       var selectedObjs = this._selection.add(objs);
 
       if (selectedObjs.length > 0) {
+        this._calculateDrawOrder();
         this.setFlag('canvasDirty', true);
       }
 
@@ -928,6 +936,7 @@ var FScene = (function (_FGroup) {
       }
 
       if (unselectedObjs.length > 0) {
+        this._calculateDrawOrder();
         this.setFlag('canvasDirty', true);
       }
 
@@ -937,7 +946,9 @@ var FScene = (function (_FGroup) {
     key: '_calculateDrawOrder',
     value: function _calculateDrawOrder() {
       var sceneObjs = Array.from(this._children);
-      sceneObjs.push(this._selection);
+      if (this._selection.getSize() > 0) {
+        sceneObjs.push(this._selection);
+      }
 
       this._drawOrder = sceneObjs.sort(function (a, b) {
         return a.layer - b.layer;
@@ -951,19 +962,19 @@ var FScene = (function (_FGroup) {
       var x = _getMouseCoords2.x;
       var y = _getMouseCoords2.y;
 
+      e.flyte = { mouse: { x: x, y: y } };
       this._mouseDown = { x: x, y: y };
 
+      // Has the mouse hit anything at all?
       var hitObjs = this.hitTest({ x: x, y: y });
-      if (hitObjs.length > 0) {} else {
+      if (hitObjs.length > 0) {
+        hitObjs[0].trigger('onmousedown', e);
+      } else {
         this.unselect();
       }
 
-      // Issue onMouseDown event to hitObjs[0].
-
       this.setFlag('canvasDirty', true);
-
-      this._prevMouseX = x;
-      this._prevMouseY = y;
+      this._mousePrev = { x: x, y: y };
     }
   }, {
     key: '_onMouseUp',
@@ -976,10 +987,9 @@ var FScene = (function (_FGroup) {
       this._selection.setDragged(false);
 
       this._mouseDown = undefined;
-      this.setFlag('canvasDirty', true);
 
-      this._prevMouseX = x;
-      this._prevMouseY = y;
+      this.setFlag('canvasDirty', true);
+      this._mousePrev = { x: x, y: y };
     }
   }, {
     key: '_onClick',
@@ -989,10 +999,9 @@ var FScene = (function (_FGroup) {
       var x = _getMouseCoords4.x;
       var y = _getMouseCoords4.y;
 
-      console.log(this.hitTest({ x: x, y: y }));
+      // console.log(this.hitTest({x, y}));
 
-      this._prevMouseX = x;
-      this._prevMouseY = y;
+      this._mousePrev = { x: x, y: y };
     }
   }, {
     key: '_onDoubleClick',
@@ -1002,8 +1011,7 @@ var FScene = (function (_FGroup) {
       var x = _getMouseCoords5.x;
       var y = _getMouseCoords5.y;
 
-      this._prevMouseX = x;
-      this._prevMouseY = y;
+      this._mousePrev = { x: x, y: y };
     }
   }, {
     key: '_onMouseMove',
@@ -1013,8 +1021,10 @@ var FScene = (function (_FGroup) {
       var x = _getMouseCoords6.x;
       var y = _getMouseCoords6.y;
 
-      var dx = x - this._prevMouseX;
-      var dy = y - this._prevMouseY;
+      this._mousePrev = this._mousePrev ? this._mousePrev : { x: x, y: y };
+
+      var dx = x - this._mousePrev.x;
+      var dy = y - this._mousePrev.y;
 
       if (this._mouseDown) {
         if (this._selection.getSize() > 0) {
@@ -1030,8 +1040,7 @@ var FScene = (function (_FGroup) {
         this.setFlag('canvasDirty', true);
       }
 
-      this._prevMouseX = x;
-      this._prevMouseY = y;
+      this._mousePrev = { x: x, y: y };
     }
   }, {
     key: '_onMouseOut',
@@ -1041,18 +1050,17 @@ var FScene = (function (_FGroup) {
       var x = _getMouseCoords7.x;
       var y = _getMouseCoords7.y;
 
-      this._prevMouseX = x;
-      this._prevMouseY = y;
+      this._mousePrev = { x: x, y: y };
     }
   }, {
     key: '_onKeyDown',
     value: function _onKeyDown(e) {
-      console.log('down');
+      // console.log('down');
     }
   }, {
     key: '_onKeyUp',
     value: function _onKeyUp(e) {
-      console.log('up');
+      // console.log('up');
     }
   }, {
     key: 'draw',
@@ -1064,7 +1072,7 @@ var FScene = (function (_FGroup) {
   }, {
     key: '_render',
     value: function _render() {
-      console.log('SCENE RENDER');
+      // console.log('SCENE RENDER');
 
       this._ctx.save();
       this._ctx.clearRect(0, 0, this._width, this._height);
@@ -1086,10 +1094,6 @@ var FScene = (function (_FGroup) {
 
           child.draw(this._ctx);
         }
-
-        // if(this._selection.getChildren().size > 0){
-        // this._selection.draw(this._ctx);
-        // }
       } catch (err) {
         _didIteratorError5 = true;
         _iteratorError5 = err;
@@ -1114,8 +1118,8 @@ var FScene = (function (_FGroup) {
   }, {
     key: '_renderMouseSelection',
     value: function _renderMouseSelection(ctx) {
-      var width = this._prevMouseX - this._mouseDown.x;
-      var height = this._prevMouseY - this._mouseDown.y;
+      var width = this._mousePrev.x - this._mouseDown.x;
+      var height = this._mousePrev.y - this._mouseDown.y;
 
       ctx.save();
       ctx.globalAlpha = this._mouseSelectionTransparency;
@@ -1212,6 +1216,12 @@ var FScene = (function (_FGroup) {
 
       return { x: x, y: y };
     }
+  }, {
+    key: 'addEventListener',
+    value: function addEventListener(eventType, fn) {
+      var _fn = fn.bind(this);
+      this._c[eventType] = _fn;
+    }
   }]);
 
   return FScene;
@@ -1259,17 +1269,17 @@ var FSelection = (function (_FGroup) {
     var background = _ref.background;
     var canvas = _ref.canvas;
     var _ref$outlineStyle = _ref.outlineStyle;
-    var outlineStyle = _ref$outlineStyle === undefined ? '#2222BB' : _ref$outlineStyle;
+    var outlineStyle = _ref$outlineStyle === undefined ? 'black' : _ref$outlineStyle;
     var _ref$outlineWidth = _ref.outlineWidth;
-    var outlineWidth = _ref$outlineWidth === undefined ? 5 : _ref$outlineWidth;
+    var outlineWidth = _ref$outlineWidth === undefined ? 2 : _ref$outlineWidth;
     var _ref$outlineDash = _ref.outlineDash;
-    var outlineDash = _ref$outlineDash === undefined ? [5, 15] : _ref$outlineDash;
+    var outlineDash = _ref$outlineDash === undefined ? [] : _ref$outlineDash;
     var _ref$transparency = _ref.transparency;
     var transparency = _ref$transparency === undefined ? 0 : _ref$transparency;
 
     _classCallCheck(this, FSelection);
 
-    _get(Object.getPrototypeOf(FSelection.prototype), 'constructor', this).call(this, { x: x, y: y, width: width, height: height, layer: 9998, scaleX: scaleX, scaleY: scaleY, angle: angle, background: background, canvas: canvas });
+    _get(Object.getPrototypeOf(FSelection.prototype), 'constructor', this).call(this, { x: x, y: y, width: width, height: height, layer: Number.MAX_SAFE_INTEGER - 1, scaleX: scaleX, scaleY: scaleY, angle: angle, background: background, canvas: canvas });
     if (!x) this._position.x = undefined;
     if (!y) this._position.y = undefined;
 
@@ -1284,6 +1294,11 @@ var FSelection = (function (_FGroup) {
   }
 
   _createClass(FSelection, [{
+    key: '_onMouseDown',
+    value: function _onMouseDown(e) {
+      console.log('mousedown on selection!');
+    }
+  }, {
     key: 'setDragged',
     value: function setDragged(dragged) {
       this._dragged = dragged;
@@ -1309,12 +1324,14 @@ var FSelection = (function (_FGroup) {
       ctx.strokeStyle = this._outlineStyle;
 
       ctx.beginPath();
-      ctx.moveTo(-this._width / 2, -this._height / 2);
-      ctx.lineTo(-this._width / 2 + this._width, -this._height / 2);
-      ctx.lineTo(-this._width / 2 + this._width, -this._height / 2 + this._height);
-      ctx.lineTo(-this._width / 2, -this._height / 2 + this._height);
-      ctx.lineTo(-this._width / 2, -this._height / 2);
+      ctx.rect(-this._width / 2, -this._height / 2, this._width, this._height);
       ctx.stroke();
+
+      // ctx.moveTo(-this._width / 2, -this._height / 2);
+      // ctx.lineTo(-this._width / 2 + this._width, -this._height / 2);
+      // ctx.lineTo(-this._width / 2 + this._width, -this._height / 2 + this._height);
+      // ctx.lineTo(-this._width / 2, -this._height / 2 + this._height);
+      // ctx.lineTo(-this._width / 2, -this._height / 2);
 
       ctx.restore();
     }

@@ -9,6 +9,10 @@ export default class FGroupMember extends FObject {
     this._selector        = undefined;
   }
 
+  _onMouseDown(e){
+    console.log('mousedown on groupMember!');
+  }
+
   setSelector(selector){
     this._selector = selector;
   }
