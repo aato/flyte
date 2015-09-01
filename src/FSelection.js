@@ -20,6 +20,22 @@ export default class FSelection extends FGroup{
     console.log('mousedown on selection!');
   }
 
+  _onMouseUp(e){
+    this.setDragged(false);
+    this._scene.setFlag('canvasDirty', true);
+  }
+
+  _onMouseMove(e){
+    if(this.getSize() > 0 && e.flyte.mouseDown){
+      this.setDragged(true);
+
+      let pos = this.getPosition();
+      if(this.setPosition({x: pos.x + e.flyte.dx, y: pos.y + e.flyte.dy})){
+        this._scene.setFlag('canvasDirty', true);
+      }
+    }
+  }
+
   setDragged(dragged){
     this._dragged = dragged;
   }
@@ -44,12 +60,6 @@ export default class FSelection extends FGroup{
       ctx.beginPath();
       ctx.rect(-this._width / 2, -this._height / 2, this._width, this._height);
       ctx.stroke();
-
-      // ctx.moveTo(-this._width / 2, -this._height / 2);
-      // ctx.lineTo(-this._width / 2 + this._width, -this._height / 2);
-      // ctx.lineTo(-this._width / 2 + this._width, -this._height / 2 + this._height);
-      // ctx.lineTo(-this._width / 2, -this._height / 2 + this._height);
-      // ctx.lineTo(-this._width / 2, -this._height / 2);
 
     ctx.restore();
   }

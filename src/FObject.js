@@ -26,7 +26,9 @@ export default class FObject{
 
     this._calculateCenter();
 
-    this.addEventListener('onmousedown', this._onMouseDown)
+    this.addEventListener('onmousedown', this._onMouseDown);
+    this.addEventListener('onmouseup', this._onMouseUp);
+    this.addEventListener('onmousemove', this._onMouseMove);
   }
 
   getLayer(){
@@ -192,7 +194,10 @@ export default class FObject{
   }
 
   addEventListener(eventType, fn){
-    this._events.set(eventType, fn);
+    var _fn = fn.bind(this);
+    this._events.set(eventType, _fn);
+
+    return eventType;
   }
 
   trigger(eventType, e){
@@ -202,5 +207,11 @@ export default class FObject{
   }
 
   _onMouseDown(e){
+  }
+
+  _onMouseUp(e){
+  }
+
+  _onMouseMove(e){
   }
 }

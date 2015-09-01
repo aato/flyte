@@ -52,6 +52,10 @@ export default class FScene extends FGroup{
     this._requestID = this._request(this._draw);
   }
 
+  getSelection(){
+    return this._selection;
+  }
+
   add(objs){
     if(!Array.isArray(objs)){
       objs = [objs];
@@ -171,36 +175,38 @@ export default class FScene extends FGroup{
 
 
 
-
+  getTopObj(x, y){
+    return this.hitTest({x, y}).sort((a,b) => {
+      return b.getPosition().layer - a.getPosition().layer
+    })[0];
+  }
 
   _onMouseDown(e){
     var {x, y} = this._getMouseCoords(e);
-    e.flyte = {mouse: {x, y}};
     this._mouseDown = {x, y};
+    e.flyte = {mouse: {x, y}};
 
     // Has the mouse hit anything? Sort by highest to lowest layer.
-    var hitObjs = this.hitTest({x, y}).sort((a,b) => {
-      return b.getPosition().layer - a.getPosition().layer
-    });
-
-    if(hitObjs.length > 0){
-      hitObjs[0].trigger('onmousedown', e);
+    var topObj = this.getTopObj(x, y);
+    if(topObj){
+      topObj.trigger('onmousedown', e);
     } else {
       this.unselect();
     }
 
-    this.setFlag('canvasDirty', true);
     this._mousePrev = {x, y};
   }
 
   _onMouseUp(e){
     var {x, y} = this._getMouseCoords(e);
 
-    this._selection.setDragged(false);
+    // Has the mouse hit anything? Sort by highest to lowest layer.
+    var topObj = this.getTopObj(x, y);
+    if(topObj){
+      topObj.trigger('onmouseup', e);
+    }
 
     this._mouseDown = undefined;
-
-    this.setFlag('canvasDirty', true);
     this._mousePrev = {x, y};
   }
 
@@ -218,24 +224,23 @@ export default class FScene extends FGroup{
 
   _onMouseMove(e){
     var {x, y} = this._getMouseCoords(e);
-
     this._mousePrev = this._mousePrev ? this._mousePrev : {x, y};
 
-    var dx = x - this._mousePrev.x;
-    var dy = y - this._mousePrev.y;
+    e.flyte = {
+      mouse: {x, y},
+      dx: x - this._mousePrev.x,
+      dy: y - this._mousePrev.y,
+      mouseDown: this._mouseDown
+    };
+
+    // Has the mouse hit anything? Sort by highest to lowest layer.
+    var topObj = this.getTopObj(this._mousePrev.x, this._mousePrev.y);
+
+    if(topObj){
+      topObj.trigger('onmousemove', e);
+    }
 
     if(this._mouseDown){
-      if(this._selection.getSize() > 0){
-        let selectionHit = this._selection.hitTest({x: this._mousePrev.x, y: this._mousePrev.y, againstSelf: true, againstChildren: false})[0];
-        if(selectionHit){
-          this._selection.setDragged(true);
-
-          let selectionPos = this._selection.getPosition();
-
-          this._selection.setPosition({x: selectionPos.x + dx, y: selectionPos.y + dy});
-        }
-      }
-
       this.setFlag('canvasDirty', true);
     }
 
@@ -306,8 +311,9 @@ export default class FScene extends FGroup{
   }
 
   addEventListener(eventType, fn){
-    var _fn = fn.bind(this);
-    this._c[eventType] = _fn;
+    var addedEventType = super.addEventListener(eventType, fn);
+
+    this._c[addedEventType] = this._events.get(addedEventType);
   }
 
   hitTest({x, y, width, height, ignore = []} = {}){
