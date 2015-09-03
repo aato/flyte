@@ -17,7 +17,6 @@ export default class FSelection extends FGroup{
   }
 
   _onMouseDown(e){
-    // console.log('mousedown on selection!');
   }
 
   _onMouseUp(e){

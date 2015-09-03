@@ -4,8 +4,8 @@
 export default class FObject{
   /**
    * FObject constructor
-   * @param  {Number} options.x          X-coordinate (world-space; of top-left corner)
-   * @param  {Number} options.y          Y-coordinate (world-space; of top-left corner)
+   * @param  {Number} options.x          X-coordinate (world-space; top-left corner)
+   * @param  {Number} options.y          Y-coordinate (world-space; top-left corner)
    * @param  {Number} options.width      Width (world-space)
    * @param  {Number} options.height     Height (world-space)
    * @param  {Number} options.scaleX     Scaling factor along x-axis (world-space)
@@ -254,8 +254,8 @@ export default class FObject{
    * @param  {Number} options.x        X-coordinate (world-space)
    * @param  {Number} options.y        Y-coordinate (world-space)
    * @param  {Number} options.width    Width of area (world-space)
-   * @param  {Number} options.height} Height of are (world-space))
-   * @return {Boolean}                  Has this FObject been hit?
+   * @param  {Number} options.height}  Height of area (world-space))
+   * @return {Boolean}                 Has this FObject been hit?
    */
   hitTest({x, y, width, height} = {}){
     if(!x || !y) return [];
