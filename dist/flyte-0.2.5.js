@@ -408,7 +408,7 @@ var FGroupMember = (function (_FObject) {
   _createClass(FGroupMember, [{
     key: '_onMouseDown',
     value: function _onMouseDown(e) {
-      console.log('mousedown on GroupMember!');
+      // console.log('mousedown on GroupMember!');
       // TODO: Add to existing selection if CTRL is pressed down.
       if (!this._scene.getSelection().contains(this)) {
         this._scene.unselect();
@@ -865,9 +865,6 @@ var FScene = (function (_FGroup) {
       }
     };
 
-    // this._mousePrev = undefined;
-    // this._mouseDown = undefined;
-
     this._mouseSelectionTransparency = 0.8;
     this._mouseSelectionFillStyle = "#D1D1FF";
 
@@ -1128,10 +1125,15 @@ var FScene = (function (_FGroup) {
         down: this._mouse.cur.down ? Object.assign({}, this._mouse.cur.down) : undefined
       };
 
+      this._mouse.cur.x = x;
+      this._mouse.cur.y = y;
+
       this._mouse.cur = {
         x: x,
-        y: y
+        y: y,
+        down: this._mouse.cur.down ? Object.assign({}, this._mouse.cur.down) : undefined
       };
+
       if (eventType === 'onmousedown') {
         this._mouse.cur.down = { x: x, y: y };
       } else if (eventType === 'onmouseup') {
@@ -1150,6 +1152,7 @@ var FScene = (function (_FGroup) {
       if (this._mouse.cur.down && (this._mouse.delta.x > 0 || this._mouse.delta.y > 0)) {
         this.setFlag('canvasDirty', true);
       }
+      this.setFlag('canvasDirty', true);
 
       // Has the mouse hit anything? Sort by highest to lowest layer.
       var topObj;
@@ -1164,8 +1167,6 @@ var FScene = (function (_FGroup) {
       if (topObj) {
         topObj.trigger(eventType, e);
       }
-
-      // this._mousePrev = {x, y};
     }
   }, {
     key: 'getTopObj',
@@ -1200,13 +1201,16 @@ var FScene = (function (_FGroup) {
           };
 
           if (selectionArea.width < 0) {
-            selectionArea.x = x;
+            selectionArea.x = _this2._mouse.prev.down.x;
             selectionArea.width *= -1;
           }
           if (selectionArea.height < 0) {
-            selectionArea.y = y;
+            selectionArea.y = _this2._mouse.prev.down.y;
             selectionArea.height *= -1;
           }
+
+          // console.log(selectionArea.x, selectionArea.y);
+          // console.log(selectionArea.width, selectionArea.height);
 
           var objsToSelect = _get(Object.getPrototypeOf(FScene.prototype), 'hitTest', _this2).call(_this2, selectionArea);
           if (objsToSelect.length > 0) {
@@ -1214,34 +1218,10 @@ var FScene = (function (_FGroup) {
           }
         }
 
-        console.log(_this2._mouse);
-
         if (_this2._mouse.cur.x !== _this2._mouse.prev.down.x || _this2._mouse.cur.y !== _this2._mouse.prev.down.y) {
           _this2.setFlag('canvasDirty', true);
         }
       });
-
-      // var {x, y} = this._getMouseCoords(e);
-
-      // this._mouseDown = undefined;
-
-      // e.flyte = {
-      // mouse: {
-      // x,
-      // y,
-      // dx: x - this._mousePrev.x,
-      // dy: y - this._mousePrev.y,
-      // down: this._mouseDown
-      // }
-      // };
-
-      // Has the mouse hit anything? Sort by highest to lowest layer.
-      // var topObj = this.getTopObj(x, y);
-      // if(topObj){
-      // topObj.trigger('onmouseup', e);
-      // }
-
-      // this._mousePrev = {x, y};
     }
   }, {
     key: '_onClick',
@@ -1504,7 +1484,7 @@ var FSelection = (function (_FGroup) {
   _createClass(FSelection, [{
     key: '_onMouseDown',
     value: function _onMouseDown(e) {
-      console.log('mousedown on selection!');
+      // console.log('mousedown on selection!');
     }
   }, {
     key: '_onMouseUp',

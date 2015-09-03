@@ -10,7 +10,7 @@ export default class FGroupMember extends FObject {
   }
 
   _onMouseDown(e){
-    console.log('mousedown on GroupMember!');
+    // console.log('mousedown on GroupMember!');
     // TODO: Add to existing selection if CTRL is pressed down.
     if(!this._scene.getSelection().contains(this)){
       this._scene.unselect();
