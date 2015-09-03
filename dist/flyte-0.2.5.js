@@ -20,7 +20,7 @@ return function WeakMap(){return get(this,arguments[0])}},{get:function get(key)
  * flyte - Object model for the HTML5 canvas - a lightweight, faster alternative to fabric.js
  * @version v0.2.5
  * @license MIT
- * @date 2015-09-02
+ * @date 2015-09-03
  * @preserve
  * Copyright (c) Alex Alksne <alex.alksne@gmail.com> 2015 All Rights Reserved.
  */
@@ -470,6 +470,9 @@ exports['default'] = FGroupMember;
 module.exports = exports['default'];
 
 },{"./FObject":3,"./FSelection":5}],3:[function(require,module,exports){
+/**
+ * An object with basic visual and spatial properties.
+ */
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -481,6 +484,20 @@ var _createClass = (function () { function defineProperties(target, props) { for
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
 var FObject = (function () {
+  /**
+   * FObject constructor
+   * @param  {Number} options.x          X-coordinate (of top-left corner)
+   * @param  {Number} options.y          Y-coordinate (of top-left corner)
+   * @param  {Number} options.width      Width
+   * @param  {Number} options.height     Height
+   * @param  {Number} options.scaleX     Scaling factor along x-axis (local space)
+   * @param  {Number} options.scaleY     Scaling factor along y-axis (local space)
+   * @param  {Number} options.angle      Rotation in degrees (world space)
+   * @param  {String|CanvasGradient|CanvasPattern} options.background Background on which all other visual elements of this FObject are drawn
+   * @param  {Number} options.layer      Depth of this FObject in the FScene
+   * @param  {Element} options.canvas    The canvas in the DOM that you want to display this scene on
+   */
+
   function FObject() {
     var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
@@ -684,8 +701,8 @@ var FObject = (function () {
       this._id = id;
     }
   }, {
-    key: 'draw',
-    value: function draw(ctx) {
+    key: '_draw',
+    value: function _draw(ctx) {
       if (this._flags.canvasDirty) {
         this._render();
         this.setFlag('canvasDirty', false);
@@ -832,6 +849,10 @@ var _FGroupMember = require('./FGroupMember');
 
 var _FGroupMember2 = _interopRequireDefault(_FGroupMember);
 
+/**
+ * Reprents an editable scene with children.
+ */
+
 var FScene = (function (_FGroup) {
   _inherits(FScene, _FGroup);
 
@@ -862,11 +883,11 @@ var FScene = (function (_FGroup) {
       delta: {
         x: undefined,
         y: undefined
-      }
-    };
+      },
 
-    this._mouseSelectionTransparency = 0.8;
-    this._mouseSelectionFillStyle = "#D1D1FF";
+      opacity: 0.8,
+      fillStyle: "#D1D1FF"
+    };
 
     this._nextID = (function () {
       var index = 0;
@@ -893,19 +914,24 @@ var FScene = (function (_FGroup) {
 
     this.addEventListener('onmousedown', this._onMouseDown);
     this.addEventListener('onmouseup', this._onMouseUp);
-    this.addEventListener('onclick', this._onClick);
-    this.addEventListener('ondblclick', this._onDoubleClick);
     this.addEventListener('onmousemove', this._onMouseMove);
     this.addEventListener('onmouseout', this._onMouseOut);
+    this.addEventListener('onclick', this._onClick);
+    this.addEventListener('ondblclick', this._onDoubleClick);
     this.addEventListener('onkeydown', this._onKeyDown);
     this.addEventListener('onkeyup', this._onKeyUp);
 
     this._request = requestFrame('request').bind(window);
     this._cancel = requestFrame('cancel').bind(window);
 
-    this._draw = this.draw.bind(this, this._ctx);
-    this._requestID = this._request(this._draw);
+    this.__draw = this._draw.bind(this, this._ctx);
+    this._requestID = this._request(this.__draw);
   }
+
+  /**
+   * Returns this FScene's FSelection object.
+   * @return {FSelection} The FSelection object representing all selected FGroupMembers in this FScene.
+   */
 
   _createClass(FScene, [{
     key: 'getSelection',
@@ -1100,20 +1126,98 @@ var FScene = (function (_FGroup) {
       return unselectedObjs;
     }
   }, {
-    key: '_calculateDrawOrder',
-    value: function _calculateDrawOrder() {
-      var sceneObjs = Array.from(this._children);
-      if (this._selection.getSize() > 0) {
-        sceneObjs.push(this._selection);
-      }
-
-      this._drawOrder = sceneObjs.sort(function (a, b) {
-        return a.getPosition().layer - b.getPosition.layer;
-      });
+    key: 'getTopObj',
+    value: function getTopObj(x, y) {
+      return this.hitTest({ x: x, y: y }).sort(function (a, b) {
+        return b.getPosition().layer - a.getPosition().layer;
+      })[0];
     }
   }, {
-    key: '_dispatchEvent',
-    value: function _dispatchEvent(eventType, e, fn) {
+    key: 'hitTest',
+    value: function hitTest() {
+      var _ref2 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+      var x = _ref2.x;
+      var y = _ref2.y;
+      var width = _ref2.width;
+      var height = _ref2.height;
+      var _ref2$ignore = _ref2.ignore;
+      var ignore = _ref2$ignore === undefined ? [] : _ref2$ignore;
+
+      var hitObjs = [];
+
+      var shouldIgnore = function shouldIgnore(obj) {
+        var _iteratorNormalCompletion5 = true;
+        var _didIteratorError5 = false;
+        var _iteratorError5 = undefined;
+
+        try {
+          for (var _iterator5 = ignore[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+            var _class = _step5.value;
+
+            if (obj instanceof _class) {
+              return true;
+            }
+          }
+        } catch (err) {
+          _didIteratorError5 = true;
+          _iteratorError5 = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion5 && _iterator5['return']) {
+              _iterator5['return']();
+            }
+          } finally {
+            if (_didIteratorError5) {
+              throw _iteratorError5;
+            }
+          }
+        }
+
+        return false;
+      };
+
+      var _iteratorNormalCompletion6 = true;
+      var _didIteratorError6 = false;
+      var _iteratorError6 = undefined;
+
+      try {
+        for (var _iterator6 = this._drawOrder[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+          var obj = _step6.value;
+
+          if (shouldIgnore(obj)) continue;
+
+          if (obj.hitTest({ x: x, y: y, width: width, height: height, againstSelf: true, againstChildren: false }).length > 0) {
+            hitObjs.push(obj);
+          }
+        }
+      } catch (err) {
+        _didIteratorError6 = true;
+        _iteratorError6 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion6 && _iterator6['return']) {
+            _iterator6['return']();
+          }
+        } finally {
+          if (_didIteratorError6) {
+            throw _iteratorError6;
+          }
+        }
+      }
+
+      return hitObjs;
+    }
+  }, {
+    key: 'addEventListener',
+    value: function addEventListener(eventType, fn) {
+      var addedEventType = _get(Object.getPrototypeOf(FScene.prototype), 'addEventListener', this).call(this, eventType, fn);
+
+      this._c[addedEventType] = this._events.get(addedEventType);
+    }
+  }, {
+    key: '_processInputs',
+    value: function _processInputs(eventType, e) {
       var _getMouseCoords2 = this._getMouseCoords(e);
 
       var x = _getMouseCoords2.x;
@@ -1141,15 +1245,19 @@ var FScene = (function (_FGroup) {
         x: this._mouse.cur.x - this._mouse.prev.x,
         y: this._mouse.cur.y - this._mouse.prev.y
       };
+    }
+  }, {
+    key: '_dispatchEvent',
+    value: function _dispatchEvent(eventType, e, fn) {
+      this._processInputs(eventType, e);
 
       e.flyte = { mouse: {} };
       Object.assign(e.flyte.mouse, this._mouse);
 
       // If the mouse is pressed down and the mouse has been moved since last frame.
-      if (this._mouse.cur.down && (this._mouse.delta.x > 0 || this._mouse.delta.y > 0)) {
+      if (this._mouse.cur.down && (Math.abs(this._mouse.delta.x) > 0 || Math.abs(this._mouse.delta.y) > 0)) {
         this.setFlag('canvasDirty', true);
       }
-      this.setFlag('canvasDirty', true);
 
       // Has the mouse hit anything? Sort by highest to lowest layer.
       var topObj;
@@ -1158,19 +1266,13 @@ var FScene = (function (_FGroup) {
       } else {
         topObj = this.getTopObj(this._mouse.cur.x, this._mouse.cur.y);
       }
+
       // Optional callback function.
       if (fn) fn(e, topObj);
 
       if (topObj) {
         topObj.trigger(eventType, e);
       }
-    }
-  }, {
-    key: 'getTopObj',
-    value: function getTopObj(x, y) {
-      return this.hitTest({ x: x, y: y }).sort(function (a, b) {
-        return b.getPosition().layer - a.getPosition().layer;
-      })[0];
     }
   }, {
     key: '_onMouseDown',
@@ -1205,10 +1307,6 @@ var FScene = (function (_FGroup) {
             selectionArea.y = _this2._mouse.cur.y;
             selectionArea.height *= -1;
           }
-          console.log(selectionArea);
-
-          // console.log(selectionArea.x, selectionArea.y);
-          // console.log(selectionArea.width, selectionArea.height);
 
           var objsToSelect = _get(Object.getPrototypeOf(FScene.prototype), 'hitTest', _this2).call(_this2, selectionArea);
           if (objsToSelect.length > 0) {
@@ -1222,16 +1320,6 @@ var FScene = (function (_FGroup) {
       });
     }
   }, {
-    key: '_onClick',
-    value: function _onClick(e) {
-      this._dispatchEvent('onclick', e);
-    }
-  }, {
-    key: '_onDoubleClick',
-    value: function _onDoubleClick(e) {
-      this._dispatchEvent('ondblclick', e);
-    }
-  }, {
     key: '_onMouseMove',
     value: function _onMouseMove(e) {
       this._dispatchEvent('onmousemove', e);
@@ -1240,6 +1328,16 @@ var FScene = (function (_FGroup) {
     key: '_onMouseOut',
     value: function _onMouseOut(e) {
       this._dispatchEvent('onmouseout', e);
+    }
+  }, {
+    key: '_onClick',
+    value: function _onClick(e) {
+      this._dispatchEvent('onclick', e);
+    }
+  }, {
+    key: '_onDoubleClick',
+    value: function _onDoubleClick(e) {
+      this._dispatchEvent('ondblclick', e);
     }
   }, {
     key: '_onKeyDown',
@@ -1252,17 +1350,32 @@ var FScene = (function (_FGroup) {
       this._dispatchEvent('onkeyup', e);
     }
   }, {
-    key: 'draw',
-    value: function draw(ctx) {
-      _get(Object.getPrototypeOf(FScene.prototype), 'draw', this).call(this, ctx);
+    key: '_calculateDrawOrder',
+    value: function _calculateDrawOrder() {
+      var sceneObjs = Array.from(this._children);
+      if (this._selection.getSize() > 0) {
+        sceneObjs.push(this._selection);
+      }
 
-      this._request(this._draw);
+      this._drawOrder = sceneObjs.sort(function (a, b) {
+        return a.getPosition().layer - b.getPosition.layer;
+      });
+    }
+  }, {
+    key: '_renderMouseSelection',
+    value: function _renderMouseSelection(ctx) {
+      var width = this._mouse.cur.x - this._mouse.cur.down.x;
+      var height = this._mouse.cur.y - this._mouse.cur.down.y;
+
+      ctx.save();
+      ctx.globalAlpha = this._mouse.opacity;
+      ctx.fillStyle = this._mouse.fillStyle;
+      ctx.fillRect(this._mouse.cur.down.x, this._mouse.cur.down.y, width, height);
+      ctx.restore();
     }
   }, {
     key: '_render',
     value: function _render() {
-      // console.log('SCENE RENDER');
-
       this._ctx.save();
       this._ctx.clearRect(0, 0, this._width, this._height);
       this._ctx.fillStyle = this._background;
@@ -1273,123 +1386,15 @@ var FScene = (function (_FGroup) {
         this.setFlag('drawOrderDirty', false);
       }
 
-      var _iteratorNormalCompletion5 = true;
-      var _didIteratorError5 = false;
-      var _iteratorError5 = undefined;
-
-      try {
-        for (var _iterator5 = this._drawOrder[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-          var child = _step5.value;
-
-          child.draw(this._ctx);
-        }
-      } catch (err) {
-        _didIteratorError5 = true;
-        _iteratorError5 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion5 && _iterator5['return']) {
-            _iterator5['return']();
-          }
-        } finally {
-          if (_didIteratorError5) {
-            throw _iteratorError5;
-          }
-        }
-      }
-
-      if (this._mouse.cur.down && this._selection.getDragged() === false) {
-        this._renderMouseSelection(this._ctx);
-      }
-
-      this._ctx.restore();
-    }
-  }, {
-    key: '_renderMouseSelection',
-    value: function _renderMouseSelection(ctx) {
-      var width = this._mouse.cur.x - this._mouse.cur.down.x;
-      var height = this._mouse.cur.y - this._mouse.cur.down.y;
-
-      ctx.save();
-      ctx.globalAlpha = this._mouseSelectionTransparency;
-      ctx.fillStyle = this._mouseSelectionFillStyle;
-      ctx.fillRect(this._mouse.cur.down.x, this._mouse.cur.down.y, width, height);
-      ctx.restore();
-    }
-  }, {
-    key: '_getMouseCoords',
-    value: function _getMouseCoords(e) {
-      var rect = this._c.getBoundingClientRect();
-      var x = e.clientX - rect.left;
-      var y = e.clientY - rect.top;
-
-      return { x: x, y: y };
-    }
-  }, {
-    key: 'addEventListener',
-    value: function addEventListener(eventType, fn) {
-      var addedEventType = _get(Object.getPrototypeOf(FScene.prototype), 'addEventListener', this).call(this, eventType, fn);
-
-      this._c[addedEventType] = this._events.get(addedEventType);
-    }
-  }, {
-    key: 'hitTest',
-    value: function hitTest() {
-      var _ref2 = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-      var x = _ref2.x;
-      var y = _ref2.y;
-      var width = _ref2.width;
-      var height = _ref2.height;
-      var _ref2$ignore = _ref2.ignore;
-      var ignore = _ref2$ignore === undefined ? [] : _ref2$ignore;
-
-      var hitObjs = [];
-
-      var shouldIgnore = function shouldIgnore(obj) {
-        var _iteratorNormalCompletion6 = true;
-        var _didIteratorError6 = false;
-        var _iteratorError6 = undefined;
-
-        try {
-          for (var _iterator6 = ignore[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
-            var _class = _step6.value;
-
-            if (obj instanceof _class) {
-              return true;
-            }
-          }
-        } catch (err) {
-          _didIteratorError6 = true;
-          _iteratorError6 = err;
-        } finally {
-          try {
-            if (!_iteratorNormalCompletion6 && _iterator6['return']) {
-              _iterator6['return']();
-            }
-          } finally {
-            if (_didIteratorError6) {
-              throw _iteratorError6;
-            }
-          }
-        }
-
-        return false;
-      };
-
       var _iteratorNormalCompletion7 = true;
       var _didIteratorError7 = false;
       var _iteratorError7 = undefined;
 
       try {
         for (var _iterator7 = this._drawOrder[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
-          var obj = _step7.value;
+          var child = _step7.value;
 
-          if (shouldIgnore(obj)) continue;
-
-          if (obj.hitTest({ x: x, y: y, width: width, height: height, againstSelf: true, againstChildren: false }).length > 0) {
-            hitObjs.push(obj);
-          }
+          child._draw(this._ctx);
         }
       } catch (err) {
         _didIteratorError7 = true;
@@ -1406,7 +1411,27 @@ var FScene = (function (_FGroup) {
         }
       }
 
-      return hitObjs;
+      if (this._mouse.cur.down && this._selection.getDragged() === false) {
+        this._renderMouseSelection(this._ctx);
+      }
+
+      this._ctx.restore();
+    }
+  }, {
+    key: '_draw',
+    value: function _draw(ctx) {
+      _get(Object.getPrototypeOf(FScene.prototype), '_draw', this).call(this, ctx);
+
+      this._request(this.__draw);
+    }
+  }, {
+    key: '_getMouseCoords',
+    value: function _getMouseCoords(e) {
+      var rect = this._c.getBoundingClientRect();
+      var x = e.clientX - rect.left;
+      var y = e.clientY - rect.top;
+
+      return { x: x, y: y };
     }
   }]);
 
@@ -1513,9 +1538,9 @@ var FSelection = (function (_FGroup) {
       return this._dragged;
     }
   }, {
-    key: 'draw',
-    value: function draw(ctx) {
-      _get(Object.getPrototypeOf(FSelection.prototype), 'draw', this).call(this, ctx);
+    key: '_draw',
+    value: function _draw(ctx) {
+      _get(Object.getPrototypeOf(FSelection.prototype), '_draw', this).call(this, ctx);
 
       ctx.save();
 

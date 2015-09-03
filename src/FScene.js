@@ -2,6 +2,9 @@ import FGroup from './FGroup';
 import FSelection from './FSelection';
 import FGroupMember from './FGroupMember';
 
+/**
+ * Reprents an editable scene with children.
+ */
 export default class FScene extends FGroup{
   constructor({canvas, width = 600, height = 300} = {}){
     super({canvas, width, height, layer: Number.MIN_SAFE_INTEGER});
@@ -20,11 +23,11 @@ export default class FScene extends FGroup{
       delta:{
         x: undefined,
         y: undefined
-      }
-    }
+      },
 
-    this._mouseSelectionTransparency = 0.8;
-    this._mouseSelectionFillStyle = "#D1D1FF";
+      opacity: 0.8,
+      fillStyle: "#D1D1FF"
+    }
 
     this._nextID = (
       () => {
@@ -52,20 +55,24 @@ export default class FScene extends FGroup{
 
     this.addEventListener('onmousedown' , this._onMouseDown);
     this.addEventListener('onmouseup'   , this._onMouseUp);
-    this.addEventListener('onclick'     , this._onClick);
-    this.addEventListener('ondblclick'  , this._onDoubleClick);
     this.addEventListener('onmousemove' , this._onMouseMove);
     this.addEventListener('onmouseout'  , this._onMouseOut);
+    this.addEventListener('onclick'     , this._onClick);
+    this.addEventListener('ondblclick'  , this._onDoubleClick);
     this.addEventListener('onkeydown'   , this._onKeyDown);
     this.addEventListener('onkeyup'     , this._onKeyUp);
 
     this._request = requestFrame('request').bind(window);
     this._cancel = requestFrame('cancel').bind(window);
 
-    this._draw = this.draw.bind(this, this._ctx);
-    this._requestID = this._request(this._draw);
+    this.__draw = this._draw.bind(this, this._ctx);
+    this._requestID = this._request(this.__draw);
   }
 
+  /**
+   * Returns this FScene's FSelection object.
+   * @return {FSelection} The FSelection object representing all selected FGroupMembers in this FScene.
+   */
   getSelection(){
     return this._selection;
   }
@@ -168,26 +175,43 @@ export default class FScene extends FGroup{
     return unselectedObjs;
   }
 
-  _calculateDrawOrder(){
-    var sceneObjs = Array.from(this._children);
-    if(this._selection.getSize() > 0){
-      sceneObjs.push(this._selection);
-    }
-
-    this._drawOrder = sceneObjs.sort((a, b) => {
-      return a.getPosition().layer - b.getPosition.layer;
-    })
+  getTopObj(x, y){
+    return this.hitTest({x, y}).sort((a,b) => {
+      return b.getPosition().layer - a.getPosition().layer
+    })[0];
   }
 
+  hitTest({x, y, width, height, ignore = []} = {}){
+    var hitObjs = [];
 
+    var shouldIgnore = (obj) => {
+      for(var _class of ignore){
+        if(obj instanceof _class){
+          return true;
+        }
+      }
 
+      return false;
+    };
 
+    for(let obj of this._drawOrder){
+      if(shouldIgnore(obj)) continue;
 
+      if(obj.hitTest({x, y, width, height, againstSelf: true, againstChildren: false}).length > 0){
+        hitObjs.push(obj);
+      }
+    }
 
+    return hitObjs;
+  }
 
+  addEventListener(eventType, fn){
+    var addedEventType = super.addEventListener(eventType, fn);
 
+    this._c[addedEventType] = this._events.get(addedEventType);
+  }
 
-  _dispatchEvent(eventType, e, fn){
+  _processInputs(eventType, e){
     var {x, y} = this._getMouseCoords(e);
 
     this._mouse.prev = {
@@ -212,15 +236,18 @@ export default class FScene extends FGroup{
       x: this._mouse.cur.x - this._mouse.prev.x,
       y: this._mouse.cur.y - this._mouse.prev.y
     }
+  }
+
+  _dispatchEvent(eventType, e, fn){
+    this._processInputs(eventType, e);
 
     e.flyte = {mouse: {}};
     Object.assign(e.flyte.mouse, this._mouse);
 
     // If the mouse is pressed down and the mouse has been moved since last frame.
-    if(this._mouse.cur.down && (this._mouse.delta.x > 0 || this._mouse.delta.y > 0)){
+    if(this._mouse.cur.down && (Math.abs(this._mouse.delta.x) > 0 || Math.abs(this._mouse.delta.y) > 0)){
       this.setFlag('canvasDirty', true);
     }
-      this.setFlag('canvasDirty', true);
 
     // Has the mouse hit anything? Sort by highest to lowest layer.
     var topObj;
@@ -229,18 +256,13 @@ export default class FScene extends FGroup{
     } else {
       topObj = this.getTopObj(this._mouse.cur.x, this._mouse.cur.y);
     }
+
     // Optional callback function.
     if(fn) fn(e, topObj);
 
     if(topObj){
       topObj.trigger(eventType, e);
     }
-  }
-
-  getTopObj(x, y){
-    return this.hitTest({x, y}).sort((a,b) => {
-      return b.getPosition().layer - a.getPosition().layer
-    })[0];
   }
 
   _onMouseDown(e){
@@ -282,20 +304,20 @@ export default class FScene extends FGroup{
     });
   }
 
-  _onClick(e){
-    this._dispatchEvent('onclick', e);
-  }
-
-  _onDoubleClick(e){
-    this._dispatchEvent('ondblclick', e);
-  }
-
   _onMouseMove(e){
     this._dispatchEvent('onmousemove', e);
   }
 
   _onMouseOut(e){
     this._dispatchEvent('onmouseout', e);
+  }
+
+  _onClick(e){
+    this._dispatchEvent('onclick', e);
+  }
+
+  _onDoubleClick(e){
+    this._dispatchEvent('ondblclick', e);
   }
 
   _onKeyDown(e){
@@ -306,10 +328,26 @@ export default class FScene extends FGroup{
     this._dispatchEvent('onkeyup', e);
   }
 
-  draw(ctx){
-    super.draw(ctx);
+  _calculateDrawOrder(){
+    var sceneObjs = Array.from(this._children);
+    if(this._selection.getSize() > 0){
+      sceneObjs.push(this._selection);
+    }
 
-    this._request(this._draw);
+    this._drawOrder = sceneObjs.sort((a, b) => {
+      return a.getPosition().layer - b.getPosition.layer;
+    })
+  }
+
+  _renderMouseSelection(ctx){
+    var width = this._mouse.cur.x - this._mouse.cur.down.x;
+    var height = this._mouse.cur.y - this._mouse.cur.down.y;
+
+    ctx.save();
+      ctx.globalAlpha = this._mouse.opacity;
+      ctx.fillStyle = this._mouse.fillStyle;
+      ctx.fillRect(this._mouse.cur.down.x, this._mouse.cur.down.y, width, height);
+    ctx.restore();
   }
 
   _render(){
@@ -324,7 +362,7 @@ export default class FScene extends FGroup{
       }
 
       for(let child of this._drawOrder){
-        child.draw(this._ctx);
+        child._draw(this._ctx);
       }
 
       if(this._mouse.cur.down && this._selection.getDragged() === false){
@@ -334,15 +372,10 @@ export default class FScene extends FGroup{
     this._ctx.restore();
   }
 
-  _renderMouseSelection(ctx){
-    var width = this._mouse.cur.x - this._mouse.cur.down.x;
-    var height = this._mouse.cur.y - this._mouse.cur.down.y;
+  _draw(ctx){
+    super._draw(ctx);
 
-    ctx.save();
-      ctx.globalAlpha = this._mouseSelectionTransparency;
-      ctx.fillStyle = this._mouseSelectionFillStyle;
-      ctx.fillRect(this._mouse.cur.down.x, this._mouse.cur.down.y, width, height);
-    ctx.restore();
+    this._request(this.__draw);
   }
 
   _getMouseCoords(e){
@@ -351,35 +384,5 @@ export default class FScene extends FGroup{
     var y = e.clientY - rect.top;
 
     return {x, y};
-  }
-
-  addEventListener(eventType, fn){
-    var addedEventType = super.addEventListener(eventType, fn);
-
-    this._c[addedEventType] = this._events.get(addedEventType);
-  }
-
-  hitTest({x, y, width, height, ignore = []} = {}){
-    var hitObjs = [];
-
-    var shouldIgnore = (obj) => {
-      for(var _class of ignore){
-        if(obj instanceof _class){
-          return true;
-        }
-      }
-
-      return false;
-    };
-
-    for(let obj of this._drawOrder){
-      if(shouldIgnore(obj)) continue;
-
-      if(obj.hitTest({x, y, width, height, againstSelf: true, againstChildren: false}).length > 0){
-        hitObjs.push(obj);
-      }
-    }
-
-    return hitObjs;
   }
 }

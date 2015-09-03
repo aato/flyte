@@ -44,8 +44,8 @@ export default class FSelection extends FGroup{
     return this._dragged;
   }
 
-  draw(ctx){
-    super.draw(ctx);
+  _draw(ctx){
+    super._draw(ctx);
 
     ctx.save();
 
