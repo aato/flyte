@@ -20,7 +20,7 @@ return function WeakMap(){return get(this,arguments[0])}},{get:function get(key)
  * flyte - Object model for the HTML5 canvas - a lightweight, faster alternative to fabric.js
  * @version v0.2.5
  * @license MIT
- * @date 2015-09-01
+ * @date 2015-09-02
  * @preserve
  * Copyright (c) Alex Alksne <alex.alksne@gmail.com> 2015 All Rights Reserved.
  */
@@ -408,6 +408,7 @@ var FGroupMember = (function (_FObject) {
   _createClass(FGroupMember, [{
     key: '_onMouseDown',
     value: function _onMouseDown(e) {
+      console.log('mousedown on GroupMember!');
       // TODO: Add to existing selection if CTRL is pressed down.
       if (!this._scene.getSelection().contains(this)) {
         this._scene.unselect();
@@ -722,26 +723,50 @@ var FObject = (function () {
 
       if (!x || !y) return [];
 
-      // If we're testing for a single point.
+      // If we're testing for a point.
       if (!width || !height) {
         if (x >= this._position.x && x <= this._position.x + this._width && y <= this._position.y + this._height && y >= this._position.y) {
           return [this];
         }
         // If we're testing for a rectangle.
       } else {
+          // Left edge.
           if (x <= this._position.x && x + width >= this._position.x) {
+            // Top-left corner.
             if (y <= this._position.y && y + height >= this._position.y) {
               return [this];
+              // Bottom-left corner.
             } else if (y <= this._position.y + this._height && y + height >= this._position.y + this._height) {
-              return [this];
-            }
+                return [this];
+                // Only left edge.
+              } else if (y >= this._position.y && y + height <= this._position.y + this._height) {
+                  return [this];
+                }
+            // Right edge.
           } else if (x <= this._position.x + this._width && x + width >= this._position.x + this._width) {
-            if (y <= this._position.y && y + height >= this._position.y) {
-              return [this];
-            } else if (y <= this._position.y + this._height && y + height >= this._position.y + this._height) {
-              return [this];
-            }
-          }
+              // Top-right corner.
+              if (y <= this._position.y && y + height >= this._position.y) {
+                return [this];
+                // Bottom-right corner.
+              } else if (y <= this._position.y + this._height && y + height >= this._position.y + this._height) {
+                  return [this];
+                  // Only right edge.
+                } else if (y >= this._position.y && y + height <= this._position.y + this._height) {
+                    return [this];
+                  }
+              // Center.
+            } else if (x >= this._position.x && x + width <= this._position.x + this._width) {
+                // Only top edge.
+                if (y <= this._position.y && y + height >= this._position.y) {
+                  return [this];
+                  // Only bottom edge.
+                } else if (y <= this._position.y + this._height && y + height >= this._position.y + this._height) {
+                    return [this];
+                    // Inside (no edges or corners).
+                  } else if (y >= this._position.y && y + height <= this._position.y + this._height) {
+                      return [this];
+                    }
+              }
         }
 
       return [];
@@ -823,16 +848,28 @@ var FScene = (function (_FGroup) {
 
     _get(Object.getPrototypeOf(FScene.prototype), 'constructor', this).call(this, { canvas: canvas, width: width, height: height, layer: Number.MIN_SAFE_INTEGER });
 
-    this._mousePrev = undefined;
+    this._mouse = {
+      prev: {
+        x: undefined,
+        y: undefined,
+        down: undefined
+      },
+      cur: {
+        x: undefined,
+        y: undefined,
+        down: undefined
+      },
+      delta: {
+        x: undefined,
+        y: undefined
+      }
+    };
 
-    this._mouseDown = undefined;
+    // this._mousePrev = undefined;
+    // this._mouseDown = undefined;
+
     this._mouseSelectionTransparency = 0.8;
     this._mouseSelectionFillStyle = "#D1D1FF";
-
-    // Allows us to listen for keydown/up event
-    this._c.tabIndex = Number.MAX_SAFE_INTEGER;
-    // Prevents canvas from being outlined.
-    this._c.style.outline = "none";
 
     this._nextID = (function () {
       var index = 0;
@@ -851,6 +888,11 @@ var FScene = (function (_FGroup) {
 
     this._drawOrder = [];
     this._flags.drawOrderDirty = true;
+
+    // Allows us to listen for keydown/up event
+    this._c.tabIndex = Number.MAX_SAFE_INTEGER;
+    // Prevents canvas from being outlined.
+    this._c.style.outline = "none";
 
     this.addEventListener('onmousedown', this._onMouseDown);
     this.addEventListener('onmouseup', this._onMouseUp);
@@ -1073,6 +1115,59 @@ var FScene = (function (_FGroup) {
       });
     }
   }, {
+    key: '_dispatchEvent',
+    value: function _dispatchEvent(eventType, e, fn) {
+      var _getMouseCoords2 = this._getMouseCoords(e);
+
+      var x = _getMouseCoords2.x;
+      var y = _getMouseCoords2.y;
+
+      this._mouse.prev = {
+        x: this._mouse.cur.x ? this._mouse.cur.x : x,
+        y: this._mouse.cur.y ? this._mouse.cur.y : y,
+        down: this._mouse.cur.down ? Object.assign({}, this._mouse.cur.down) : undefined
+      };
+
+      this._mouse.cur = {
+        x: x,
+        y: y
+      };
+      if (eventType === 'onmousedown') {
+        this._mouse.cur.down = { x: x, y: y };
+      } else if (eventType === 'onmouseup') {
+        this._mouse.cur.down = undefined;
+      }
+
+      this._mouse.delta = {
+        x: this._mouse.cur.x - this._mouse.prev.x,
+        y: this._mouse.cur.y - this._mouse.prev.y
+      };
+
+      e.flyte = { mouse: {} };
+      Object.assign(e.flyte.mouse, this._mouse);
+
+      // If the mouse is pressed down and the mouse has been moved since last frame.
+      if (this._mouse.cur.down && (this._mouse.delta.x > 0 || this._mouse.delta.y > 0)) {
+        this.setFlag('canvasDirty', true);
+      }
+
+      // Has the mouse hit anything? Sort by highest to lowest layer.
+      var topObj;
+      if (eventType === 'onmousemove') {
+        topObj = this.getTopObj(this._mouse.prev.x, this._mouse.prev.y);
+      } else {
+        topObj = this.getTopObj(this._mouse.cur.x, this._mouse.cur.y);
+      }
+      // Optional callback function.
+      if (fn) fn(e, topObj);
+
+      if (topObj) {
+        topObj.trigger(eventType, e);
+      }
+
+      // this._mousePrev = {x, y};
+    }
+  }, {
     key: 'getTopObj',
     value: function getTopObj(x, y) {
       return this.hitTest({ x: x, y: y }).sort(function (a, b) {
@@ -1082,148 +1177,101 @@ var FScene = (function (_FGroup) {
   }, {
     key: '_onMouseDown',
     value: function _onMouseDown(e) {
-      var _getMouseCoords2 = this._getMouseCoords(e);
+      var _this = this;
 
-      var x = _getMouseCoords2.x;
-      var y = _getMouseCoords2.y;
-
-      this._mouseDown = { x: x, y: y };
-
-      e.flyte = {
-        mouse: { x: x, y: y },
-        dx: undefined,
-        dy: undefined,
-        mouseDown: this._mouseDown
-      };
-
-      // Has the mouse hit anything? Sort by highest to lowest layer.
-      var topObj = this.getTopObj(x, y);
-      if (topObj) {
-        topObj.trigger('onmousedown', e);
-      } else {
-        this.unselect();
-      }
-
-      this._mousePrev = { x: x, y: y };
+      this._dispatchEvent('onmousedown', e, function (e, topObj) {
+        if (!topObj) {
+          _this.unselect();
+        }
+      });
     }
   }, {
     key: '_onMouseUp',
     value: function _onMouseUp(e) {
-      var _getMouseCoords3 = this._getMouseCoords(e);
+      var _this2 = this;
 
-      var x = _getMouseCoords3.x;
-      var y = _getMouseCoords3.y;
+      this._dispatchEvent('onmouseup', e, function (e, topObj) {
+        if (_this2._selection.getSize() === 0) {
+          var selectionArea = {
+            x: _this2._mouse.cur.x,
+            y: _this2._mouse.cur.y,
+            width: _this2._mouse.cur.x - _this2._mouse.prev.down.x,
+            height: _this2._mouse.cur.y - _this2._mouse.prev.down.y
+          };
 
-      var selectionArea = {
-        x: this._mouseDown.x,
-        y: this._mouseDown.y,
-        width: x - this._mouseDown.x,
-        height: y - this._mouseDown.y
-      };
-      if (selectionArea.width < 0) {
-        selectionArea.x = x;
-        selectionArea.width *= -1;
-      }
-      if (selectionArea.height < 0) {
-        selectionArea.y = y;
-        selectionArea.height *= -1;
-      }
-      var objsToSelect = _get(Object.getPrototypeOf(FScene.prototype), 'hitTest', this).call(this, selectionArea);
-      if (objsToSelect.length > 0) {
-        this.unselect();
-        this.select(objsToSelect);
-      }
+          if (selectionArea.width < 0) {
+            selectionArea.x = x;
+            selectionArea.width *= -1;
+          }
+          if (selectionArea.height < 0) {
+            selectionArea.y = y;
+            selectionArea.height *= -1;
+          }
 
-      if (x !== this._mouseDown.x || y !== this._mouseDown.y) {
-        this.setFlag('canvasDirty', true);
-      }
+          var objsToSelect = _get(Object.getPrototypeOf(FScene.prototype), 'hitTest', _this2).call(_this2, selectionArea);
+          if (objsToSelect.length > 0) {
+            _this2.select(objsToSelect);
+          }
+        }
 
-      this._mouseDown = undefined;
+        console.log(_this2._mouse);
 
-      e.flyte = {
-        mouse: { x: x, y: y },
-        dx: undefined,
-        dy: undefined,
-        mouseDown: this._mouseDown
-      };
+        if (_this2._mouse.cur.x !== _this2._mouse.prev.down.x || _this2._mouse.cur.y !== _this2._mouse.prev.down.y) {
+          _this2.setFlag('canvasDirty', true);
+        }
+      });
+
+      // var {x, y} = this._getMouseCoords(e);
+
+      // this._mouseDown = undefined;
+
+      // e.flyte = {
+      // mouse: {
+      // x,
+      // y,
+      // dx: x - this._mousePrev.x,
+      // dy: y - this._mousePrev.y,
+      // down: this._mouseDown
+      // }
+      // };
 
       // Has the mouse hit anything? Sort by highest to lowest layer.
-      var topObj = this.getTopObj(x, y);
-      if (topObj) {
-        topObj.trigger('onmouseup', e);
-      }
+      // var topObj = this.getTopObj(x, y);
+      // if(topObj){
+      // topObj.trigger('onmouseup', e);
+      // }
 
-      this._mousePrev = { x: x, y: y };
+      // this._mousePrev = {x, y};
     }
   }, {
     key: '_onClick',
     value: function _onClick(e) {
-      var _getMouseCoords4 = this._getMouseCoords(e);
-
-      var x = _getMouseCoords4.x;
-      var y = _getMouseCoords4.y;
-
-      this._mousePrev = { x: x, y: y };
+      this._dispatchEvent('onclick', e);
     }
   }, {
     key: '_onDoubleClick',
     value: function _onDoubleClick(e) {
-      var _getMouseCoords5 = this._getMouseCoords(e);
-
-      var x = _getMouseCoords5.x;
-      var y = _getMouseCoords5.y;
-
-      this._mousePrev = { x: x, y: y };
+      this._dispatchEvent('ondblclick', e);
     }
   }, {
     key: '_onMouseMove',
     value: function _onMouseMove(e) {
-      var _getMouseCoords6 = this._getMouseCoords(e);
-
-      var x = _getMouseCoords6.x;
-      var y = _getMouseCoords6.y;
-
-      this._mousePrev = this._mousePrev ? this._mousePrev : { x: x, y: y };
-
-      e.flyte = {
-        mouse: { x: x, y: y },
-        dx: x - this._mousePrev.x,
-        dy: y - this._mousePrev.y,
-        mouseDown: this._mouseDown
-      };
-
-      // Has the mouse hit anything? Sort by highest to lowest layer.
-      var topObj = this.getTopObj(this._mousePrev.x, this._mousePrev.y);
-
-      if (topObj) {
-        topObj.trigger('onmousemove', e);
-      }
-
-      if (this._mouseDown) {
-        this.setFlag('canvasDirty', true);
-      }
-
-      this._mousePrev = { x: x, y: y };
+      this._dispatchEvent('onmousemove', e);
     }
   }, {
     key: '_onMouseOut',
     value: function _onMouseOut(e) {
-      var _getMouseCoords7 = this._getMouseCoords(e);
-
-      var x = _getMouseCoords7.x;
-      var y = _getMouseCoords7.y;
-
-      this._mousePrev = { x: x, y: y };
+      this._dispatchEvent('onmouseout', e);
     }
   }, {
     key: '_onKeyDown',
     value: function _onKeyDown(e) {
-      // console.log('down');
+      this._dispatchEvent('onkeydown', e);
     }
   }, {
     key: '_onKeyUp',
     value: function _onKeyUp(e) {
-      // console.log('up');
+      this._dispatchEvent('onkeyup', e);
     }
   }, {
     key: 'draw',
@@ -1272,7 +1320,7 @@ var FScene = (function (_FGroup) {
         }
       }
 
-      if (this._mouseDown && this._selection.getDragged() === false) {
+      if (this._mouse.cur.down && this._selection.getDragged() === false) {
         this._renderMouseSelection(this._ctx);
       }
 
@@ -1281,13 +1329,13 @@ var FScene = (function (_FGroup) {
   }, {
     key: '_renderMouseSelection',
     value: function _renderMouseSelection(ctx) {
-      var width = this._mousePrev.x - this._mouseDown.x;
-      var height = this._mousePrev.y - this._mouseDown.y;
+      var width = this._mouse.cur.x - this._mouse.cur.down.x;
+      var height = this._mouse.cur.y - this._mouse.cur.down.y;
 
       ctx.save();
       ctx.globalAlpha = this._mouseSelectionTransparency;
       ctx.fillStyle = this._mouseSelectionFillStyle;
-      ctx.fillRect(this._mouseDown.x, this._mouseDown.y, width, height);
+      ctx.fillRect(this._mouse.cur.down.x, this._mouse.cur.down.y, width, height);
       ctx.restore();
     }
   }, {
@@ -1467,11 +1515,11 @@ var FSelection = (function (_FGroup) {
   }, {
     key: '_onMouseMove',
     value: function _onMouseMove(e) {
-      if (this.getSize() > 0 && e.flyte.mouseDown) {
+      if (this.getSize() > 0 && e.flyte.mouse.cur.down) {
         this.setDragged(true);
 
         var pos = this.getPosition();
-        if (this.setPosition({ x: pos.x + e.flyte.dx, y: pos.y + e.flyte.dy })) {
+        if (this.setPosition({ x: pos.x + e.flyte.mouse.delta.x, y: pos.y + e.flyte.mouse.delta.y })) {
           this._scene.setFlag('canvasDirty', true);
         }
       }

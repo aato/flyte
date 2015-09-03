@@ -168,23 +168,47 @@ export default class FObject{
   hitTest({x, y, width, height} = {}){
     if(!x || !y) return [];
 
-    // If we're testing for a single point.
+    // If we're testing for a point.
     if(!width || !height){
       if(x >= this._position.x && x <= this._position.x + this._width && y <= this._position.y + this._height && y >= this._position.y){
         return [this];
       }
     // If we're testing for a rectangle.
     } else {
+      // Left edge.
       if(x <= this._position.x && x + width >= this._position.x){
+        // Top-left corner.
         if(y <= this._position.y && y + height >= this._position.y){
           return [this];
+        // Bottom-left corner.
         } else if (y <= this._position.y + this._height && y + height >= this._position.y + this._height){
+          return [this];
+        // Only left edge.
+        } else if (y >= this._position.y && y + height <= this._position.y + this._height){
           return [this];
         }
+      // Right edge.
       } else if(x <= this._position.x + this._width && x + width >= this._position.x + this._width) {
+        // Top-right corner.
         if(y <= this._position.y && y + height >= this._position.y){
           return [this];
+        // Bottom-right corner.
         } else if (y <= this._position.y + this._height && y + height >= this._position.y + this._height){
+          return [this];
+        // Only right edge.
+        } else if (y >= this._position.y && y + height <= this._position.y + this._height){
+          return [this];
+        }
+      // Center.
+      } else if(x >= this._position.x && x + width <= this._position.x + this._width) {
+        // Only top edge.
+        if(y <= this._position.y && y + height >= this._position.y){
+          return [this];
+        // Only bottom edge.
+        } else if (y <= this._position.y + this._height && y + height >= this._position.y + this._height){
+          return [this];
+        // Inside (no edges or corners).
+        } else if (y >= this._position.y && y + height <= this._position.y + this._height){
           return [this];
         }
       }

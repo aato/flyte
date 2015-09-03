@@ -26,11 +26,11 @@ export default class FSelection extends FGroup{
   }
 
   _onMouseMove(e){
-    if(this.getSize() > 0 && e.flyte.mouseDown){
+    if(this.getSize() > 0 && e.flyte.mouse.cur.down){
       this.setDragged(true);
 
       let pos = this.getPosition();
-      if(this.setPosition({x: pos.x + e.flyte.dx, y: pos.y + e.flyte.dy})){
+      if(this.setPosition({x: pos.x + e.flyte.mouse.delta.x, y: pos.y + e.flyte.mouse.delta.y})){
         this._scene.setFlag('canvasDirty', true);
       }
     }

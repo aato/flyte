@@ -6,16 +6,29 @@ export default class FScene extends FGroup{
   constructor({canvas, width = 600, height = 300} = {}){
     super({canvas, width, height, layer: Number.MIN_SAFE_INTEGER});
 
-    this._mousePrev = undefined;
+    this._mouse = {
+      prev:{
+        x: undefined,
+        y: undefined,
+        down: undefined
+      },
+      cur:{
+        x: undefined,
+        y: undefined,
+        down: undefined
+      },
+      delta:{
+        x: undefined,
+        y: undefined
+      }
+    }
 
-    this._mouseDown = undefined;
+    // this._mousePrev = undefined;
+    // this._mouseDown = undefined;
+
+
     this._mouseSelectionTransparency = 0.8;
     this._mouseSelectionFillStyle = "#D1D1FF";
-
-    // Allows us to listen for keydown/up event
-    this._c.tabIndex = Number.MAX_SAFE_INTEGER;
-    // Prevents canvas from being outlined.
-    this._c.style.outline = "none";
 
     this._nextID = (
       () => {
@@ -35,6 +48,11 @@ export default class FScene extends FGroup{
 
     this._drawOrder = [];
     this._flags.drawOrderDirty = true;
+
+    // Allows us to listen for keydown/up event
+    this._c.tabIndex = Number.MAX_SAFE_INTEGER;
+    // Prevents canvas from being outlined.
+    this._c.style.outline = "none";
 
     this.addEventListener('onmousedown' , this._onMouseDown);
     this.addEventListener('onmouseup'   , this._onMouseUp);
@@ -173,7 +191,54 @@ export default class FScene extends FGroup{
 
 
 
+  _dispatchEvent(eventType, e, fn){
+    var {x, y} = this._getMouseCoords(e);
 
+    this._mouse.prev = {
+      x: this._mouse.cur.x ? this._mouse.cur.x : x,
+      y: this._mouse.cur.y ? this._mouse.cur.y : y,
+      down: this._mouse.cur.down ? Object.assign({}, this._mouse.cur.down) : undefined
+    }
+
+    this._mouse.cur = {
+      x,
+      y
+    }
+    if(eventType === 'onmousedown'){
+      this._mouse.cur.down = {x, y};
+    } else if(eventType === 'onmouseup'){
+      this._mouse.cur.down = undefined;
+    }
+
+    this._mouse.delta = {
+      x: this._mouse.cur.x - this._mouse.prev.x,
+      y: this._mouse.cur.y - this._mouse.prev.y
+    }
+
+    e.flyte = {mouse: {}};
+    Object.assign(e.flyte.mouse, this._mouse);
+
+    // If the mouse is pressed down and the mouse has been moved since last frame.
+    if(this._mouse.cur.down && (this._mouse.delta.x > 0 || this._mouse.delta.y > 0)){
+      this.setFlag('canvasDirty', true);
+    }
+
+    // Has the mouse hit anything? Sort by highest to lowest layer.
+    var topObj;
+    if(eventType === 'onmousemove'){
+      topObj = this.getTopObj(this._mouse.prev.x, this._mouse.prev.y);
+    } else {
+      topObj = this.getTopObj(this._mouse.cur.x, this._mouse.cur.y);
+    }
+    // Optional callback function.
+    if(fn) fn(e, topObj);
+
+    if(topObj){
+      topObj.trigger(eventType, e);
+    }
+
+    // this._mousePrev = {x, y};
+  }
 
   getTopObj(x, y){
     return this.hitTest({x, y}).sort((a,b) => {
@@ -182,121 +247,89 @@ export default class FScene extends FGroup{
   }
 
   _onMouseDown(e){
-    var {x, y} = this._getMouseCoords(e);
-    this._mouseDown = {x, y};
-
-    e.flyte = {
-      mouse: {x, y},
-      dx: undefined,
-      dy: undefined,
-      mouseDown: this._mouseDown
-    };
-
-    // Has the mouse hit anything? Sort by highest to lowest layer.
-    var topObj = this.getTopObj(x, y);
-    if(topObj){
-      topObj.trigger('onmousedown', e);
-    } else {
-      this.unselect();
-    }
-
-    this._mousePrev = {x, y};
+    this._dispatchEvent('onmousedown', e, (e, topObj) => {
+      if(!topObj) {
+        this.unselect();
+      }
+    });
   }
 
   _onMouseUp(e){
-    var {x, y} = this._getMouseCoords(e);
+    this._dispatchEvent('onmouseup', e, (e, topObj) => {
+      if(this._selection.getSize() === 0){
+        let selectionArea = {
+          x: this._mouse.cur.x,
+          y: this._mouse.cur.y,
+          width: this._mouse.cur.x - this._mouse.prev.down.x,
+          height: this._mouse.cur.y - this._mouse.prev.down.y
+        }
 
-    var selectionArea = {
-      x: this._mouseDown.x,
-      y: this._mouseDown.y,
-      width: x - this._mouseDown.x,
-      height: y - this._mouseDown.y
-    }
-    if(selectionArea.width < 0){
-      selectionArea.x = x;
-      selectionArea.width *= -1;
-    }
-    if(selectionArea.height < 0){
-      selectionArea.y = y;
-      selectionArea.height *= -1;
-    }
-    var objsToSelect = super.hitTest(selectionArea);
-    if(objsToSelect.length > 0){
-      this.unselect();
-      this.select(objsToSelect);
-    }
+        if(selectionArea.width < 0){
+          selectionArea.x = x;
+          selectionArea.width *= -1;
+        }
+        if(selectionArea.height < 0){
+          selectionArea.y = y;
+          selectionArea.height *= -1;
+        }
 
-    if(x !== this._mouseDown.x || y !== this._mouseDown.y){
-      this.setFlag('canvasDirty', true);
-    }
+        let objsToSelect = super.hitTest(selectionArea);
+        if(objsToSelect.length > 0){
+          this.select(objsToSelect);
+        }
+      }
 
-    this._mouseDown = undefined;
+      if(this._mouse.cur.x !== this._mouse.prev.down.x || this._mouse.cur.y !== this._mouse.prev.down.y){
+        this.setFlag('canvasDirty', true);
+      }
+    });
 
-    e.flyte = {
-      mouse: {x, y},
-      dx: undefined,
-      dy: undefined,
-      mouseDown: this._mouseDown
-    };
+    // var {x, y} = this._getMouseCoords(e);
+
+
+    // this._mouseDown = undefined;
+
+    // e.flyte = {
+      // mouse: {
+        // x,
+        // y,
+        // dx: x - this._mousePrev.x,
+        // dy: y - this._mousePrev.y,
+        // down: this._mouseDown
+      // }
+    // };
 
     // Has the mouse hit anything? Sort by highest to lowest layer.
-    var topObj = this.getTopObj(x, y);
-    if(topObj){
-      topObj.trigger('onmouseup', e);
-    }
+    // var topObj = this.getTopObj(x, y);
+    // if(topObj){
+      // topObj.trigger('onmouseup', e);
+    // }
 
-    this._mousePrev = {x, y};
+    // this._mousePrev = {x, y};
   }
 
   _onClick(e){
-    var {x, y} = this._getMouseCoords(e);
-
-    this._mousePrev = {x, y};
+    this._dispatchEvent('onclick', e);
   }
 
   _onDoubleClick(e){
-    var {x, y} = this._getMouseCoords(e);
-
-    this._mousePrev = {x, y};
+    this._dispatchEvent('ondblclick', e);
   }
 
   _onMouseMove(e){
-    var {x, y} = this._getMouseCoords(e);
-    this._mousePrev = this._mousePrev ? this._mousePrev : {x, y};
-
-    e.flyte = {
-      mouse: {x, y},
-      dx: x - this._mousePrev.x,
-      dy: y - this._mousePrev.y,
-      mouseDown: this._mouseDown
-    };
-
-    // Has the mouse hit anything? Sort by highest to lowest layer.
-    var topObj = this.getTopObj(this._mousePrev.x, this._mousePrev.y);
-
-    if(topObj){
-      topObj.trigger('onmousemove', e);
-    }
-
-    if(this._mouseDown){
-      this.setFlag('canvasDirty', true);
-    }
-
-    this._mousePrev = {x, y};
+    this._dispatchEvent('onmousemove', e);
   }
 
   _onMouseOut(e){
-    var {x, y} = this._getMouseCoords(e);
-
-    this._mousePrev = {x, y};
+    this._dispatchEvent('onmouseout', e);
   }
 
   _onKeyDown(e){
-    // console.log('down');
+    this._dispatchEvent('onkeydown', e);
   }
 
   _onKeyUp(e){
-    // console.log('up');
+    this._dispatchEvent('onkeyup', e);
   }
 
   draw(ctx){
@@ -322,7 +355,7 @@ export default class FScene extends FGroup{
         child.draw(this._ctx);
       }
 
-      if(this._mouseDown && this._selection.getDragged() === false){
+      if(this._mouse.cur.down && this._selection.getDragged() === false){
         this._renderMouseSelection(this._ctx);
       }
 
@@ -330,13 +363,13 @@ export default class FScene extends FGroup{
   }
 
   _renderMouseSelection(ctx){
-    var width = this._mousePrev.x - this._mouseDown.x;
-    var height = this._mousePrev.y - this._mouseDown.y;
+    var width = this._mouse.cur.x - this._mouse.cur.down.x;
+    var height = this._mouse.cur.y - this._mouse.cur.down.y;
 
     ctx.save();
       ctx.globalAlpha = this._mouseSelectionTransparency;
       ctx.fillStyle = this._mouseSelectionFillStyle;
-      ctx.fillRect(this._mouseDown.x, this._mouseDown.y, width, height);
+      ctx.fillRect(this._mouse.cur.down.x, this._mouse.cur.down.y, width, height);
     ctx.restore();
   }
 
