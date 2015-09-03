@@ -1125,9 +1125,6 @@ var FScene = (function (_FGroup) {
         down: this._mouse.cur.down ? Object.assign({}, this._mouse.cur.down) : undefined
       };
 
-      this._mouse.cur.x = x;
-      this._mouse.cur.y = y;
-
       this._mouse.cur = {
         x: x,
         y: y,
@@ -1194,20 +1191,21 @@ var FScene = (function (_FGroup) {
       this._dispatchEvent('onmouseup', e, function (e, topObj) {
         if (_this2._selection.getSize() === 0) {
           var selectionArea = {
-            x: _this2._mouse.cur.x,
-            y: _this2._mouse.cur.y,
+            x: _this2._mouse.prev.down.x,
+            y: _this2._mouse.prev.down.y,
             width: _this2._mouse.cur.x - _this2._mouse.prev.down.x,
             height: _this2._mouse.cur.y - _this2._mouse.prev.down.y
           };
 
           if (selectionArea.width < 0) {
-            selectionArea.x = _this2._mouse.prev.down.x;
+            selectionArea.x = _this2._mouse.cur.x;
             selectionArea.width *= -1;
           }
           if (selectionArea.height < 0) {
-            selectionArea.y = _this2._mouse.prev.down.y;
+            selectionArea.y = _this2._mouse.cur.y;
             selectionArea.height *= -1;
           }
+          console.log(selectionArea);
 
           // console.log(selectionArea.x, selectionArea.y);
           // console.log(selectionArea.width, selectionArea.height);

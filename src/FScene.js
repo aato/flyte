@@ -196,9 +196,6 @@ export default class FScene extends FGroup{
       down: this._mouse.cur.down ? Object.assign({}, this._mouse.cur.down) : undefined
     }
 
-    this._mouse.cur.x = x;
-    this._mouse.cur.y = y;
-
     this._mouse.cur = {
       x,
       y,
@@ -258,23 +255,20 @@ export default class FScene extends FGroup{
     this._dispatchEvent('onmouseup', e, (e, topObj) => {
       if(this._selection.getSize() === 0){
         let selectionArea = {
-          x: this._mouse.cur.x,
-          y: this._mouse.cur.y,
+          x: this._mouse.prev.down.x,
+          y: this._mouse.prev.down.y,
           width: this._mouse.cur.x - this._mouse.prev.down.x,
           height: this._mouse.cur.y - this._mouse.prev.down.y
         }
 
         if(selectionArea.width < 0){
-          selectionArea.x = this._mouse.prev.down.x;
+          selectionArea.x = this._mouse.cur.x;
           selectionArea.width *= -1;
         }
         if(selectionArea.height < 0){
-          selectionArea.y = this._mouse.prev.down.y;
+          selectionArea.y = this._mouse.cur.y;
           selectionArea.height *= -1;
         }
-
-        // console.log(selectionArea.x, selectionArea.y);
-        // console.log(selectionArea.width, selectionArea.height);
 
         let objsToSelect = super.hitTest(selectionArea);
         if(objsToSelect.length > 0){
@@ -319,8 +313,6 @@ export default class FScene extends FGroup{
   }
 
   _render(){
-    // console.log('SCENE RENDER');
-
     this._ctx.save();
       this._ctx.clearRect(0, 0, this._width, this._height);
       this._ctx.fillStyle = this._background;
