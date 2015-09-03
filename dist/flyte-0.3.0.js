@@ -18,7 +18,7 @@ return function WeakMap(){return get(this,arguments[0])}},{get:function get(key)
 
 /**
  * flyte - Object model for the HTML5 canvas - a lightweight, faster alternative to fabric.js
- * @version v0.2.5
+ * @version v0.3.0
  * @license MIT
  * @date 2015-09-03
  * @preserve
@@ -471,7 +471,7 @@ module.exports = exports['default'];
 
 },{"./FObject":3,"./FSelection":5}],3:[function(require,module,exports){
 /**
- * An object with basic visual and spatial properties.
+ * An object with basic visual and spatial properties. Can subscribe to events.
  */
 'use strict';
 
@@ -486,16 +486,16 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var FObject = (function () {
   /**
    * FObject constructor
-   * @param  {Number} options.x          X-coordinate (of top-left corner)
-   * @param  {Number} options.y          Y-coordinate (of top-left corner)
-   * @param  {Number} options.width      Width
-   * @param  {Number} options.height     Height
-   * @param  {Number} options.scaleX     Scaling factor along x-axis (local space)
-   * @param  {Number} options.scaleY     Scaling factor along y-axis (local space)
+   * @param  {Number} options.x          X-coordinate (world-space; top-left corner)
+   * @param  {Number} options.y          Y-coordinate (world-space; top-left corner)
+   * @param  {Number} options.width      Width (world-space)
+   * @param  {Number} options.height     Height (world-space)
+   * @param  {Number} options.scaleX     Scaling factor along x-axis (world-space)
+   * @param  {Number} options.scaleY     Scaling factor along y-axis (world-space)
    * @param  {Number} options.angle      Rotation in degrees (world space)
    * @param  {String|CanvasGradient|CanvasPattern} options.background Background on which all other visual elements of this FObject are drawn
-   * @param  {Number} options.layer      Depth of this FObject in the FScene
-   * @param  {Element} options.canvas    The canvas in the DOM that you want to display this scene on
+   * @param  {Number} options.layer      Depth of this FObject in the FScene (world-space)
+   * @param  {Element} options.canvas    The canvas that you want to draw this scene on. Creates one off-screen if none-passed in.
    */
 
   function FObject() {
@@ -523,7 +523,9 @@ var FObject = (function () {
 
     _classCallCheck(this, FObject);
 
+    // Unique id within the scene.
     this._id = undefined;
+    // Scene that this FObject belongs to (can belong to none initially and be added later).
     this._scene = undefined;
 
     this._position = { x: x, y: y, layer: layer };
@@ -533,7 +535,9 @@ var FObject = (function () {
     this._width = width;
     this._height = height;
 
+    // An alias for ctx.fillStyle.
     this._background = background;
+    // Center point in world-space.
     this._center = { x: undefined, y: undefined };
 
     this._c = canvas || document.createElement('canvas');
@@ -541,24 +545,37 @@ var FObject = (function () {
     this._c.height = this._height;
     this._ctx = this._c.getContext('2d');
 
+    // Currently used for optimization, can be expanded to other uses.
     this._flags = {
       canvasDirty: true
     };
 
+    // All events this FObject is subscribed to.
     this._events = new Map();
 
     this._calculateCenter();
 
+    // Subscribe all FObjects to these events be default. Others can be added.
     this.addEventListener('onmousedown', this._onMouseDown);
     this.addEventListener('onmouseup', this._onMouseUp);
     this.addEventListener('onmousemove', this._onMouseMove);
   }
+
+  /**
+   * What layer is the FObject currently on>
+   * @return {Number} Current layer
+   */
 
   _createClass(FObject, [{
     key: 'getLayer',
     value: function getLayer() {
       return this._position.layer;
     }
+
+    /**
+     * Set this FObject's current layer - this will invalidate its canvas.
+     * @param {Number} layer The new layer for this FObjects
+     */
   }, {
     key: 'setLayer',
     value: function setLayer() {
@@ -569,11 +586,22 @@ var FObject = (function () {
       this._position.layer = layer;
       if (this._scene) this._scene.setFlag('drawOrderDirty', true);
     }
+
+    /**
+     * Set a flag; used to inform this FObject how it should go about rendering itself. Can be expanded to set non-performance related flags.
+     * @param {[type]} flag  [description]
+     * @param {[type]} value [description]
+     */
   }, {
     key: 'setFlag',
     value: function setFlag(flag, value) {
       this._flags[flag] = value;
     }
+
+    /**
+     * What the world bounding box of this FObject?
+     * @return {Array} Array of {x: _, y: _}s of the form [topLeft, topRight, bottomRight, bottomLeft]
+     */
   }, {
     key: 'getWorldBoundingBox',
     value: function getWorldBoundingBox() {
@@ -598,6 +626,13 @@ var FObject = (function () {
 
       return [rot(topLeft), rot(topRight), rot(bottomRight), rot(bottomLeft)];
     }
+
+    /**
+     * Give this FObject a new world-position.
+     * @param {Number} options.x     World-x coordinate
+     * @param {Number} options.y     World-y coordinate
+     * @param {Number} options.layer World-layer coordinate
+     */
   }, {
     key: 'setPosition',
     value: function setPosition() {
@@ -622,6 +657,11 @@ var FObject = (function () {
 
       return true;
     }
+
+    /**
+     * What's this FObject's current world-position?
+     * @return {Object} Current position of the form {x: _, y: _, layer: _}
+     */
   }, {
     key: 'getPosition',
     value: function getPosition() {
@@ -651,11 +691,21 @@ var FObject = (function () {
 
       return true;
     }
+
+    /**
+     * What's the world-width and -height of this FObject?
+     * @return {Object} Current dimensions of the form {width: _, height: _}
+     */
   }, {
     key: 'getDimensions',
     value: function getDimensions() {
       return { width: this._width, height: this._height };
     }
+
+    /**
+     * Give this FObject a new background.
+     * @param {String|CanvasGradient|CanvasPattern} background An alias for ctx.fillStyle; will take the same arguments
+     */
   }, {
     key: 'setBackground',
     value: function setBackground() {
@@ -667,6 +717,11 @@ var FObject = (function () {
       this.setFlag('canvasDirty', true);
       if (this._scene) this._scene.setFlag('canvasDirty', true);
     }
+
+    /**
+     * What's this FObject's current background?
+     * @return {String|CanvasGradient|CanvasPattern} Returns whatever ctx.fillStyle would return
+     */
   }, {
     key: 'getBackground',
     value: function getBackground() {
@@ -680,26 +735,51 @@ var FObject = (function () {
         y: this._position.y + this._height / 2
       };
     }
+
+    /**
+     * What scene (if any) does this FObject belong to?
+     * @return {FScene|undefined} Scene this FObject belongs to
+     */
   }, {
     key: 'getScene',
     value: function getScene() {
       return this._scene;
     }
+
+    /**
+     * What's this FObject's id (if it has one - if it doesn't belong to a scene it will return `undefined`)?
+     * @return {Number|undefined} ID of this FObject
+     */
   }, {
     key: 'getID',
     value: function getID() {
       return this._id;
     }
+
+    /**
+     * Set this FObject's scene.
+     * @param {FScene} Scene The FScene to link this FObject to
+     */
   }, {
     key: 'setScene',
     value: function setScene(scene) {
       this._scene = scene;
     }
+
+    /**
+     * Set this FObject's id.
+     * @param {Number} id The id to give this
+     */
   }, {
     key: 'setID',
     value: function setID(id) {
       this._id = id;
     }
+
+    /**
+     * Draw this FObject to the world canvas.
+     * @param  { CanvasRenderingContext2D} ctx The world-context on which this FObject's personal canvas will be rendered to
+     */
   }, {
     key: '_draw',
     value: function _draw(ctx) {
@@ -716,10 +796,13 @@ var FObject = (function () {
 
       ctx.restore();
     }
+
+    /**
+     * (Re)draw this FObject's personal canvas.
+     */
   }, {
     key: '_render',
     value: function _render() {
-      // console.log('OBJECT RENDER');
       this._ctx.save();
       this._ctx.clearRect(0, 0, this._width, this._height);
       this._ctx.fillStyle = this._background;
@@ -728,6 +811,15 @@ var FObject = (function () {
       // Update this object's canvas here.
       this._ctx.restore();
     }
+
+    /**
+     * Has this FObject been hit (by either a point or an area)?
+     * @param  {Number} options.x        X-coordinate (world-space)
+     * @param  {Number} options.y        Y-coordinate (world-space)
+     * @param  {Number} options.width    Width of area (world-space)
+     * @param  {Number} options.height}  Height of area (world-space))
+     * @return {Boolean}                 Has this FObject been hit?
+     */
   }, {
     key: 'hitTest',
     value: function hitTest() {
@@ -788,6 +880,12 @@ var FObject = (function () {
 
       return [];
     }
+
+    /**
+     * Add an event listener to this FObject.
+     * @param {String}   eventType What event do we want this FObject to listen to? (ex.: 'onmousedown', 'onmousemove')
+     * @param {Function} fn        What function should be called when this event occurs?
+     */
   }, {
     key: 'addEventListener',
     value: function addEventListener(eventType, fn) {
@@ -796,6 +894,12 @@ var FObject = (function () {
 
       return eventType;
     }
+
+    /**
+     * Trigger an event that this FObject is listening for.
+     * @param  {String} eventType What event do we want to trigger? (ex.: 'onmousedown', 'onmousemove')
+     * @param  {Object} e         The Object containig relevant event information (where was the mouse cursor at the moment this event occurred? What kets were being pressed on the mouse and keyboard? etc.)
+     */
   }, {
     key: 'trigger',
     value: function trigger(eventType, e) {
@@ -803,12 +907,27 @@ var FObject = (function () {
         this._events.get(eventType)(e);
       }
     }
+
+    /**
+     * Dummy onMouseDown callback function, meant to be overriden in child classes.
+     * @param  {Object} e The Object containig relevant event information (where was the mouse cursor at the moment this event occurred? What kets were being pressed on the mouse and keyboard? etc.)
+     */
   }, {
     key: '_onMouseDown',
     value: function _onMouseDown(e) {}
+
+    /**
+     * Dummy onMouseUp callback function, meant to be overriden in child classes.
+     * @param  {Object} e The Object containig relevant event information (where was the mouse cursor at the moment this event occurred? What kets were being pressed on the mouse and keyboard? etc.)
+     */
   }, {
     key: '_onMouseUp',
     value: function _onMouseUp(e) {}
+
+    /**
+     * Dummy onMouseMove callback function, meant to be overriden in child classes.
+     * @param  {Object} e The Object containig relevant event information (where was the mouse cursor at the moment this event occurred? What kets were being pressed on the mouse and keyboard? etc.)
+     */
   }, {
     key: '_onMouseMove',
     value: function _onMouseMove(e) {}
@@ -1506,9 +1625,7 @@ var FSelection = (function (_FGroup) {
 
   _createClass(FSelection, [{
     key: '_onMouseDown',
-    value: function _onMouseDown(e) {
-      // console.log('mousedown on selection!');
-    }
+    value: function _onMouseDown(e) {}
   }, {
     key: '_onMouseUp',
     value: function _onMouseUp(e) {
