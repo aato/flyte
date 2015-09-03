@@ -1,5 +1,5 @@
 /**
- * An object with basic visual and spatial properties.
+ * An object with basic visual and spatial properties. Can subscribe to events.
  */
 export default class FObject{
   /**

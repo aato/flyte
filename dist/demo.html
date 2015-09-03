@@ -7,34 +7,19 @@
 
     <script src="flyte-0.2.5.js"></script>
     <script>
-      // mousedown, mouseup, mousemove, mouseclick, mousedblclick, mouseleave
-      // focus, blur
-      // translate, scale, rotate
-      // transform
-      //
-      // focus, blur
-      // add, remove
-
       var c = document.getElementById('myScene');
 
       var scene = new FL.FScene({canvas: c});
+
       var o = new FL.FGroupMember({background: 'red'});
       var o2 = new FL.FGroupMember({background: 'green', x: 300, y: 200});
-      // o._rotation = 33;
+
+      o._rotation = 33;
+
       scene.add(o);
       scene.add(o2);
+
       scene.select([o, o2]);
-
-      // o.setPosition({x: 200, y: 50});
-      // o.setDimensions({height: 200})
-
-
-
-      // var rect = new FL.FRect({width: 400, height: 300, onchange: rectChanged});
-      // scene.add(rect);
-
-      // scene.listen('transform', '#')
-
     </script>
 </body>
 </html>
